@@ -79,6 +79,7 @@ public class CombinationLock {
 	 * @return boolean if key is correct or not.
 	 */
 	public boolean checkKey(){
+		@SuppressWarnings("resource")
 		Scanner userInput = new Scanner(System.in);
 		int digit;
 		for(int i = 0; i<combination.length; i++){
