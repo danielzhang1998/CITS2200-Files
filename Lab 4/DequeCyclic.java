@@ -3,11 +3,10 @@ import CITS2200.Overflow;
 import CITS2200.Underflow;
 
 
-public class DequeCyclic implements Deque{
+public class DequeCyclic implements Deque<Object>{
 	
 	private int currentSize;
-	public int right;
-	public int left;
+	private int left;
 	private Object [] line;
 	
 	/*
@@ -18,7 +17,6 @@ public class DequeCyclic implements Deque{
 	public DequeCyclic(int capacity){
 		line = new Object[capacity];
 		left = 0;
-		right = 1;
 		currentSize = 0;
 		// create second index currentSize for dequeue size
 	}
@@ -37,8 +35,7 @@ public class DequeCyclic implements Deque{
 	 * left and right.
 	 */
 	public boolean isFull(){
-		//return right - left + 1 == line.length;
-		return currentSize == line.length-2;
+		return currentSize == line.length;
 	}
 	
 	/**
@@ -66,8 +63,8 @@ public class DequeCyclic implements Deque{
 	 */
 	public void pushRight(Object c) throws Overflow{
 		if(!isFull()){
-			right = (right + 1)%line.length;
-			line[right] = c;
+			//right = (left + currentSize + 1)%line.length;
+			line[(left + currentSize)%line.length] = c;
 			currentSize++;
 		}
 		else throw new Overflow("Deque is full");
@@ -91,7 +88,7 @@ public class DequeCyclic implements Deque{
 	 */
 	public Object peekRight() throws Underflow{
 		if(!isEmpty()){
-			return line[right];
+			return line[(left+currentSize-1)%line.length];
 		}
 		else throw new Underflow("Deque is empty");
 	}
@@ -105,18 +102,19 @@ public class DequeCyclic implements Deque{
 	public Object popLeft() throws Underflow{
 		if(!isEmpty()){
 			Object temp = peekLeft();
-			left = left + 1;
-			left = (left + 1 + line.length)%line.length;
+			left = (left + 1)%line.length;
 			currentSize--;
 			return temp;
 		}
 		else throw new Underflow("Deque is empty");
 	}
 	
+	/**
+	 * Removes item at right and returns it.
+	 */
 	public Object popRight() throws Underflow{
 		if(!isEmpty()){
 			Object temp = peekRight();
-			right = (right - 1 + line.length)%line.length;
 			currentSize--;
 			return temp;
 		}
