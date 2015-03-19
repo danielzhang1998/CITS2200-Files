@@ -35,17 +35,18 @@ public class Sorter implements Sort
 	**/
 	public void insertionSort(long[] a)
     	{
-    		int j;
-    		int key;
-    		int i;
+
     		
-    		for(j=1, j < a.length,j++){
-    			key = a[j];
-    			
-    			for(i = j-1, (i >= 0) && (a[i]<key), i--){
+    		for(int j=1; j < a.length; j++){
+    			long key = a[j];
+    			int i = j-1;
+    			while(i >= 0 && a[i] > key){
     				a[i+1] = a[i];
+    				count++;
+    				i--;
     			}
     			a[i+1] = key;
+    			count++;
     		}
 	}
 
@@ -59,34 +60,33 @@ public class Sorter implements Sort
 		quickSort(a, 0, a.length - 1);
 	}
 	
-	private void quickSort(long[] a,p,r){	//p = low, r = high
-		if (a.length == 0 || a == null){
-			return;
-		}
-		
-		if (p<=r){
+	private void quickSort(long[] a,int p,int r){	//p = low, r = high
+		if (p<r){
 			int q = partition(a,p,r);
 			quickSort(a,p,q-1);
 			quickSort(a,q+1,r);
 		}
 	}
 	
-	private void partition(long[] a,p,r){
-		int x = a[r-1];
+	private int partition(long[] a,int p,int r){
+		long x = a[r];
 		int i = p - 1;
-		int temp;
-		for(j = p, j= r-1, ++j){
+		for(int j = p; j < r ; j++){
 				if(a[j]<=x){
 					i++;
-					temp = a[i];
-					a[i] = a[j];
-					a[j] = temp;
+					exchange(a, i, j);
 				}
 		}
-		temp = a[i+1];
-		a[i+1] = a[r];
-		a[r] = temp;
+		exchange(a, i+1, r);
 		return i+1;
+	}
+	
+	private void exchange(long []a, int i, int j){
+		long temp = a[i];
+		a[i] = a[j];
+		count++;
+		a[j] = temp;
+		count++;
 	}
 	
 	/**
@@ -145,9 +145,5 @@ public class Sorter implements Sort
 	mergeSort(a,i+1,r);
 	merge(a, p,i,r);
 	}
-	}
-	
-
-
-  
+	}  
   }
