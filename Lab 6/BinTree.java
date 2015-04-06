@@ -1,21 +1,27 @@
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+import java.util.Queue;
+
 import CITS2200.BinaryTree;
 import CITS2200.Iterator;
 
 /**
  * @author Pradyumn
  * Extends the abstract class Binary Tree
+ * @param <E>
  *
  */
-public class BinTree extends BinaryTree<Object>{
-	
+public class BinTree<E> extends BinaryTree<E>{
 
 	public BinTree() {
 		super();
 	}
 	
-	public BinTree(Object item, BinaryTree<Object> b1, BinaryTree<Object> b2){
+	public BinTree(E item, BinaryTree<E> b1, BinaryTree<E> b2){
 		super(item,b1,b2);
 	}
+	
+	BinaryTree<E> root = this;
 	
 	//Returns true if left child present
 	public boolean hasLeft(){
@@ -27,51 +33,180 @@ public class BinTree extends BinaryTree<Object>{
 		return this.getRight() != null;
 	}
 	
+	/**
+	 * Checks if one Binary Tree is equal in all
+	 * values and node locations to this binary tree
+	 */
 	@Override
 	public boolean equals(Object bT) {
 		
-		//checks where abstract types match
+		/**
+		 * checks where abstract types match
+		 * for root check 
+		**/
 		if(!(bT instanceof BinaryTree<?>)){
 			return false;
 		}
+	
+		/**
+		 * casts object as subclass BinTree
+		 */
+		@SuppressWarnings("unchecked")
+		BinTree<E> trial = (BinTree<E>) bT;
 		
-		//casts object as subclass BinTree
-		BinTree trial = (BinTree) bT;
-		
-		//checks if left and right nodes are similar
-		//in external and internal properties
+		/*
+		 * checks if node does NOT have similar 
+		 * external and internal properties
+		 */
 		if(hasLeft() != trial.hasLeft() || hasRight() != trial.hasRight()){
 			return false;
 		}
 		
-		//checks if items are NOT equal at the current node
+		/**
+		 * Check if item objects are NOT equal
+		 */
 		if(!this.getItem().equals(trial.getItem())){
 			return false;
 		}
 		
-		//checks if left has child and if both left
-		//items are NOT equal
+		/*
+		 * Checks if left has child and recursively calls this
+		 * method to continue checks along the left tree
+		 */
 		if(hasLeft() && !this.getLeft().equals(trial.getLeft())){
 			return false;
 		}
 		
-		//checks if right is internal node and if both right
-		//items are NOT equal
+		/*
+		 * Checks if right has child and recursively calls this
+		 * method to continue checks along the right tree
+		 */
 		if(hasRight() && !this.getRight().equals(trial.getRight())){
 			return false;
 		}
 		
-		//passes true when if statements pass true
+		/**
+		 * Passes true when if statements pass true
+		 */
 		return true;
 		
 	}
 	
-
+	/**
+	 * Returns an iterator that returns E types.
+	 * It will be used to traverse the BinaryTree
+	 */
 	@Override
-	public Iterator<Object> iterator() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	public Iterator<E> iterator() {
+		
+		Queue<BinaryTree<E>> treeBuffer = new LinkedList<BinaryTree<E>>();
+		
+		if (root != null){
+			treeBuffer.add(root);
+		}
+		
+		
+		Iterator<E> treeWalk = new Iterator<E>(){
+			
+			@Override
+			public boolean hasNext(){
+				return !treeBuffer.isEmpty();
+			}
+			
+			@Override
+			public E next(){
+				
+				if(!hasNext()){
+					throw new NoSuchElementException("No more items!");
+				}
+				
+				//pointer is removed from front of queue
+				//and into temporary variable
+				BinaryTree<E> focus = treeBuffer.poll();
+				
+				//adds left child pointer to queue if present
+				if(focus.getLeft() != null){
+					treeBuffer.add(focus.getLeft());
+				}
+				
+				//adds right child pointer to queue if present
+				if(focus.getRight() != null){
+					treeBuffer.add(focus.getRight());
+				}
+				
+				//returns the actual object from the queue
+				return focus.getItem();
+			}
+		
+		};
+		return treeWalk;
+		}
 	
-
+	
+	
+	
+	
+	
+	
+	/**
+	 * Sub Class TreeIterator
+	 * Returns E from a tree which it
+	 * iterates over.
+	 * @author Pradyumn
+	 *
+	 * @param <E>
+	 */
+	public class TreeIterator implements Iterator<E>{
+		
+		//Initialising a Queue of appropriate type
+		private Queue<BinaryTree<E>> treeBuffer;
+		
+		
+		//Initialising a BinaryTree<E> object
+		public TreeIterator(){
+			treeBuffer = new LinkedList<BinaryTree<E>>();
+		
+			//If tree root is not empty adds pointer to Queue
+			if(root != null){
+				//add pointer root of tree to end of queue
+				treeBuffer.add(root);
+			}
+		}
+		
+		//Checks if queue is populated
+		@Override
+		public boolean hasNext() {
+			return !treeBuffer.isEmpty();
+		}
+		
+		//@returns next E extracted from list
+		@Override
+		public E next(){
+			
+			if(!hasNext()){
+				throw new NoSuchElementException("No more items!");
+			}
+			
+			//pointer is removed from front of queue
+			//and into temporary variable
+			BinaryTree<E> focus = treeBuffer.poll();
+			
+			//adds left child pointer to queue if present
+			if(focus.getLeft() != null){
+				treeBuffer.add(focus.getLeft());
+			}
+			
+			//adds right child pointer to queue if present
+			if(focus.getRight() != null){
+				treeBuffer.add(focus.getRight());
+			}
+			
+			//returns the actual object from the queue
+			return focus.getItem();
+		}
+		
+		public void remove(){
+			throw new UnsupportedOperationException("Invalid operation can't remove.");
+		}
+	}
 }
