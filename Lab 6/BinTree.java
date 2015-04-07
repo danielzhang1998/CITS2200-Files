@@ -25,12 +25,12 @@ public class BinTree<E> extends BinaryTree<E>{
 	
 	//Returns true if left child present
 	public boolean hasLeft(){
-		return this.getLeft() != null;
+		return !this.getLeft().isEmpty();
 	}
 	
 	//Returns true if left child present
 	public boolean hasRight(){
-		return this.getRight() != null;
+		return !this.getRight().isEmpty();
 	}
 	
 	/**
@@ -51,8 +51,8 @@ public class BinTree<E> extends BinaryTree<E>{
 		/**
 		 * casts object as subclass BinTree
 		 */
-		@SuppressWarnings("unchecked")
-		BinTree<E> trial = (BinTree<E>) bT;
+		BinTree<E> trial = new BinTree<E>();
+		trial = (BinTree<E>) bT;
 		
 		/*
 		 * checks if node does NOT have similar 
@@ -99,7 +99,7 @@ public class BinTree<E> extends BinaryTree<E>{
 	@Override
 	public Iterator<E> iterator() {
 		
-		Queue<BinaryTree<E>> treeBuffer = new LinkedList<BinaryTree<E>>();
+		final Queue<BinaryTree<E>> treeBuffer = new LinkedList<BinaryTree<E>>();
 		
 		if (root != null){
 			treeBuffer.add(root);
@@ -125,12 +125,12 @@ public class BinTree<E> extends BinaryTree<E>{
 				BinaryTree<E> focus = treeBuffer.poll();
 				
 				//adds left child pointer to queue if present
-				if(focus.getLeft() != null){
+				if(!focus.getLeft().isEmpty()){
 					treeBuffer.add(focus.getLeft());
 				}
 				
 				//adds right child pointer to queue if present
-				if(focus.getRight() != null){
+				if(!focus.getRight().isEmpty()){
 					treeBuffer.add(focus.getRight());
 				}
 				
@@ -141,72 +141,4 @@ public class BinTree<E> extends BinaryTree<E>{
 		};
 		return treeWalk;
 		}
-	
-	
-	
-	
-	
-	
-	
-	/**
-	 * Sub Class TreeIterator
-	 * Returns E from a tree which it
-	 * iterates over.
-	 * @author Pradyumn
-	 *
-	 * @param <E>
-	 */
-	public class TreeIterator implements Iterator<E>{
-		
-		//Initialising a Queue of appropriate type
-		private Queue<BinaryTree<E>> treeBuffer;
-		
-		
-		//Initialising a BinaryTree<E> object
-		public TreeIterator(){
-			treeBuffer = new LinkedList<BinaryTree<E>>();
-		
-			//If tree root is not empty adds pointer to Queue
-			if(root != null){
-				//add pointer root of tree to end of queue
-				treeBuffer.add(root);
-			}
-		}
-		
-		//Checks if queue is populated
-		@Override
-		public boolean hasNext() {
-			return !treeBuffer.isEmpty();
-		}
-		
-		//@returns next E extracted from list
-		@Override
-		public E next(){
-			
-			if(!hasNext()){
-				throw new NoSuchElementException("No more items!");
-			}
-			
-			//pointer is removed from front of queue
-			//and into temporary variable
-			BinaryTree<E> focus = treeBuffer.poll();
-			
-			//adds left child pointer to queue if present
-			if(focus.getLeft() != null){
-				treeBuffer.add(focus.getLeft());
-			}
-			
-			//adds right child pointer to queue if present
-			if(focus.getRight() != null){
-				treeBuffer.add(focus.getRight());
-			}
-			
-			//returns the actual object from the queue
-			return focus.getItem();
-		}
-		
-		public void remove(){
-			throw new UnsupportedOperationException("Invalid operation can't remove.");
-		}
-	}
 }
