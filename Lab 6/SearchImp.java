@@ -4,7 +4,6 @@ import java.util.Queue;
 
 import CITS2200.Graph;
 import CITS2200.Search;
-import CITS2200.Graph;
 
 /**
  * 
@@ -16,46 +15,28 @@ import CITS2200.Graph;
  */
 public class SearchImp implements Search {
 	
+	private int vertices;
+	private int[] colour;
+	private int parent[];
 	
 	@Override
 	public int[] getConnectedTree(Graph g, int startVertex) {
-		int vertices = g.getNumberOfVertices();
-		//white = 0 not found, grey = 1 found, black = 2 processed
-		int[] colour = new int[vertices];
-		//startVertex has already been found
-		colour[0] = 1;
-				
-		//Initiate parent array with -1 as being unfound
-		int[] parent = new int[vertices];
-		for(int p = 0; p < vertices; ++p){
-			parent[p] = -1;
-		}
-		
-		//Queue to temporarily hold nodes
-		Queue<Integer> flow = new LinkedList<Integer>();
-		
-		//Add starting node to queue
-		flow.add(startVertex);
-		
-		//Indicate which vertex is being looked for
-		while(!flow.isEmpty()){
-			int focus = flow.poll();
-			for(int i = 0; i < vertices; ++i){
-				if (g.getEdgeMatrix()[focus][i] > 1 && colour[i] == 0){
-					parent[i] = focus;
-					colour[i] = 1;
-					flow.add(i);
-				}
-			}
-		}
-	return parent;
+		beforeFirst(g,startVertex);
+		return parent;
 	}
-
+	
+	private int distance[];
+	
 	@Override
 	public int[] getDistances(Graph g, int startVertex) {
-		int vertices = g.getNumberOfVertices();
+		beforeFirst(g,startVertex);
+		return distance;
+		}
+	
+	public void beforeFirst(Graph g, int startVertex) {
+		vertices = g.getNumberOfVertices();
 		//white = 0 not found, grey = 1 found, black = 2 processed
-		int[] colour = new int[vertices];
+		colour = new int[vertices];
 		//startVertex has already been found
 		colour[0] = 1;
 		
@@ -67,7 +48,7 @@ public class SearchImp implements Search {
 		//which has zero distance to itself.
 		int[] distance = new int[vertices];
 		Arrays.fill(distance,-1);
-		distance[0] = 0;
+		distance[startVertex] = 0;
 		
 		//Queue to temporarily hold vertices
 		Queue<Integer> flow = new LinkedList<Integer>();
@@ -86,14 +67,10 @@ public class SearchImp implements Search {
 				}
 			}
 		}
-	return distance;
 	}
-
 	
-	// no need for parents as not creating a parent array
-	private int[] colour;
 	private int[][] times;
-	private int vertices;
+	
 	
 	@Override
 	public int[][] getTimes(Graph g, int startVertex) {
