@@ -27,8 +27,8 @@ public class SearchImp implements Search {
 				
 		//Initiate parent array with -1 as being unfound
 		int[] parent = new int[vertices];
-		for(int p:parent){
-			p = -1;
+		for(int p = 0; p < vertices; ++p){
+			parent[p] = -1;
 		}
 		
 		//Queue to temporarily hold nodes
@@ -38,17 +38,13 @@ public class SearchImp implements Search {
 		flow.add(startVertex);
 		
 		//Indicate which vertex is being looked for
-		int arrayPos = 1;
 		while(!flow.isEmpty()){
 			int focus = flow.poll();
-			for(int i = 0; i < g.getEdgeMatrix()[0].length; ++i){
-				if (g.getEdgeMatrix()[i][0] == focus){
-					if(colour[arrayPos] == 0){
-						parent[arrayPos] = focus;
-						colour[arrayPos] = 1;
-						++arrayPos;
-						flow.add(g.getEdgeMatrix()[i][1]);
-					}
+			for(int i = 0; i < vertices; ++i){
+				if (g.getEdgeMatrix()[focus][i] > 1 && colour[i] == 0){
+					parent[i] = focus;
+					colour[i] = 1;
+					flow.add(i);
 				}
 			}
 		}
@@ -64,39 +60,29 @@ public class SearchImp implements Search {
 		colour[0] = 1;
 		
 		//Initiate parent array with -1 as being unfound
-		int[] parent = new int[vertices];
-		for(int p:parent){
-			p = -1;
-		}
+		int[] parent = new int[vertices];	
+		Arrays.fill(parent, -1);
 		
-		//Initiate parent array with -1 as being unfound
+		//Initiate distance array with -1 except startVertex
+		//which has zero distance to itself.
 		int[] distance = new int[vertices];
+		Arrays.fill(distance,-1);
+		distance[0] = 0;
 		
-		// automatically designates startVertex as having zero distance
-		int j = 1;
-		while(j<vertices){
-			distance[j] = -1;
-		}
-		
-		//Queue to temporarily hold nodes
+		//Queue to temporarily hold vertices
 		Queue<Integer> flow = new LinkedList<Integer>();
 		
 		//Add starting node to queue
 		flow.add(startVertex);
 		
-		//Indicate which vertex is being looked for
-		int arrayPos = 1;
 		while(!flow.isEmpty()){
 			int focus = flow.poll();
-			for(int i = 0; i < g.getEdgeMatrix()[0].length; ++i){
-				if (g.getEdgeMatrix()[i][0] == focus){
-					if(colour[arrayPos] == 0){
-						parent[arrayPos] = focus;
-						distance[arrayPos] = distance[Arrays.asList(distance).indexOf(focus)] + 1;
-						colour[arrayPos] = 1;
-						++arrayPos;
-						flow.add(g.getEdgeMatrix()[i][1]);
-					}
+			for(int i = 0; i < vertices; ++i){
+				if (g.getEdgeMatrix()[focus][i] > 0 && colour[i] == 0){
+					distance[i] = distance[focus] + 1;
+					parent[i] = focus;
+					colour[i] = 1;
+					flow.add(i);
 				}
 			}
 		}
@@ -104,39 +90,42 @@ public class SearchImp implements Search {
 	}
 
 	
+	// no need for parents as not creating a parent array
+	private int[] colour;
+	private int[][] times;
+	private int vertices;
 	
 	@Override
 	public int[][] getTimes(Graph g, int startVertex) {
-		int vertices = g.getNumberOfVertices();
+		vertices = g.getNumberOfVertices();
 		//Create 2 column array for start and finish times
-		int[][] times = new int[vertices][2];
-		int[] colour = new int[vertices];
-		//Initiate parent array with -1 as being unfound
-		int[] parent = new int[vertices];
-		for(int p:parent){
-			p = -1;
-		}
-		
-		int arrayPos = 0;
+		times = new int[vertices][2];
+		// all vertices are unfound
+		colour = new int[vertices];
+		//Initiate timer to start at 0
 		int timer = 0;
+		//Begin DFS
+		depthFirstTimer(g, startVertex, timer);
 		
-		depthFirstTiming(g, colour, parent, arrayPos, timer, startVertex, times);
-		
-		
-		return null;
+		return times;
 	}
 	
-	private void  depthFirstTiming(Graph g, int[] colour, int[] parent, int timer, int arrayPos, int start, int[][]times){
-		times[arrayPos][0] = ++timer;
-		colour[start] = 1;
-		for(int i = 0; i < g.getEdgeMatrix()[0].length; ++i){
-			if (g.getEdgeMatrix()[i][0] == start && colour[arrayPos] == 0){
-				parent[arrayPos] = start;
-				depthFirstTiming(g, colour, parent, timer, arrayPos, g.getEdgeMatrix()[i][1], times);
+	private void depthFirstTimer(Graph g, int startVertex, int timer){
+		//mark vertex as found
+		colour[startVertex] = 1;
+		//increment timer for finding vertex and add as start
+		times[startVertex][0] = ++timer;
+		for(int i = 0; i < vertices; ++i){
+			//if vertex is adjacent and colour is white
+			//add vertex to recursive stack with timer
+			if(g.getEdgeMatrix()[startVertex][i] > 0 && colour[i] == 0){
+				depthFirstTimer(g,i,timer);
 			}
 		}
-		colour[arrayPos] = 2;
-		times[arrayPos][1] = ++timer;
+		//mark vertex as processed, DFS finished, not really required
+		colour[startVertex] = 2;
+		//increment timer and add as end time
+		times[startVertex][1] = ++timer;
 	}
-
+	
 }
