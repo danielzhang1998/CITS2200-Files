@@ -15,30 +15,29 @@ import CITS2200.Search;
  */
 public class SearchImp implements Search {
 	
-	private int vertices;
-	private int[] colour;
-	private int parent[];
+	//make a list to pass along int[] from BFS
+	private final static LinkedList<int[]> result = new LinkedList<int[]>();
 	
 	@Override
 	public int[] getConnectedTree(Graph g, int startVertex) {
 		beforeFirst(g,startVertex);
-		return parent;
+		return result.get(0);
 	}
 	
-	private int distance[];
 	
 	@Override
 	public int[] getDistances(Graph g, int startVertex) {
 		beforeFirst(g,startVertex);
-		return distance;
+		return result.get(1);
 		}
 	
 	public void beforeFirst(Graph g, int startVertex) {
-		vertices = g.getNumberOfVertices();
+		
+		int vertices = g.getNumberOfVertices();
 		//white = 0 not found, grey = 1 found, black = 2 processed
-		colour = new int[vertices];
+		int[] colour = new int[vertices];
 		//startVertex has already been found
-		colour[0] = 1;
+		colour[startVertex] = 1;
 		
 		//Initiate parent array with -1 as being unfound
 		int[] parent = new int[vertices];	
@@ -48,18 +47,19 @@ public class SearchImp implements Search {
 		//which has zero distance to itself.
 		int[] distance = new int[vertices];
 		Arrays.fill(distance,-1);
-		distance[startVertex] = 0;
 		
 		//Queue to temporarily hold vertices
 		Queue<Integer> flow = new LinkedList<Integer>();
 		
 		//Add starting node to queue
 		flow.add(startVertex);
+		//distance to self is 0
+		distance[startVertex] = 0;
 		
 		while(!flow.isEmpty()){
 			int focus = flow.poll();
 			for(int i = 0; i < vertices; ++i){
-				if (g.getEdgeMatrix()[focus][i] > 0 && colour[i] == 0){
+				if (g.getEdgeMatrix()[focus][i] > 0 && colour[i] < 1){
 					distance[i] = distance[focus] + 1;
 					parent[i] = focus;
 					colour[i] = 1;
@@ -67,42 +67,47 @@ public class SearchImp implements Search {
 				}
 			}
 		}
+	result.add(0,parent);
+	result.add(1,distance);
 	}
-	
-	private int[][] times;
 	
 	
 	@Override
 	public int[][] getTimes(Graph g, int startVertex) {
-		vertices = g.getNumberOfVertices();
+		int vertices = g.getNumberOfVertices();
 		//Create 2 column array for start and finish times
-		times = new int[vertices][2];
+		int[][] times = new int[vertices][2];
 		// all vertices are unfound
-		colour = new int[vertices];
-		//Initiate timer to start at 0
+		int[] colour = new int[vertices];
+		// set timer to 0
 		int timer = 0;
 		//Begin DFS
-		depthFirstTimer(g, startVertex, timer);
-		
+		for(int i = 0; i<vertices; ++i){
+			if(colour[i] < 1){
+				//pass along variables to avoid creating globals
+				depthFirstTimer(g, startVertex, colour, times, timer);
+			}
+		}
 		return times;
 	}
 	
-	private void depthFirstTimer(Graph g, int startVertex, int timer){
+	private void depthFirstTimer(Graph g, int currentVertex, int[]colour, int[][]times, int timer){
+		int vertices = g.getNumberOfVertices();
 		//mark vertex as found
-		colour[startVertex] = 1;
+		colour[currentVertex] = 1;
 		//increment timer for finding vertex and add as start
-		times[startVertex][0] = ++timer;
+		times[currentVertex][0] = ++timer;
 		for(int i = 0; i < vertices; ++i){
 			//if vertex is adjacent and colour is white
 			//add vertex to recursive stack with timer
-			if(g.getEdgeMatrix()[startVertex][i] > 0 && colour[i] == 0){
-				depthFirstTimer(g,i,timer);
+			if(g.getEdgeMatrix()[currentVertex][i] > 0 && colour[i] < 1){
+				depthFirstTimer(g, i, colour, times, timer);
 			}
 		}
 		//mark vertex as processed, DFS finished, not really required
-		colour[startVertex] = 2;
+		colour[currentVertex] = 2;
 		//increment timer and add as end time
-		times[startVertex][1] = ++timer;
+		times[currentVertex][1] = ++timer;
 	}
 	
 }
