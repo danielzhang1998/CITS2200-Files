@@ -18,6 +18,7 @@ public class SearchImp implements Search {
 	//make a list to pass along int[] from BFS
 	private final static LinkedList<int[]> result = new LinkedList<int[]>();
 	
+	
 	@Override
 	public int[] getConnectedTree(Graph g, int startVertex) {
 		beforeFirst(g,startVertex);
@@ -32,7 +33,8 @@ public class SearchImp implements Search {
 		}
 	
 	public void beforeFirst(Graph g, int startVertex) {
-		
+		//call for vertex number and adjacency matrix only once
+		int[][] adjacencyMatrix = g.getEdgeMatrix();
 		int vertices = g.getNumberOfVertices();
 		//white = 0 not found, grey = 1 found, black = 2 processed
 		int[] colour = new int[vertices];
@@ -59,7 +61,7 @@ public class SearchImp implements Search {
 		while(!flow.isEmpty()){
 			int focus = flow.poll();
 			for(int i = 0; i < vertices; ++i){
-				if (g.getEdgeMatrix()[focus][i] > 0 && colour[i] < 1){
+				if (adjacencyMatrix[focus][i] > 0 && colour[i] < 1){
 					distance[i] = distance[focus] + 1;
 					parent[i] = focus;
 					colour[i] = 1;
@@ -91,16 +93,20 @@ public class SearchImp implements Search {
 		return times;
 	}
 	
+
+	
 	private void depthFirstTimer(Graph g, int currentVertex, int[]colour, int[][]times, int timer){
 		int vertices = g.getNumberOfVertices();
 		//mark vertex as found
 		colour[currentVertex] = 1;
+		//call function only once
+		int[][] adjacencyMatrix = g.getEdgeMatrix();
 		//increment timer for finding vertex and add as start
 		times[currentVertex][0] = ++timer;
 		for(int i = 0; i < vertices; ++i){
 			//if vertex is adjacent and colour is white
 			//add vertex to recursive stack with timer
-			if(g.getEdgeMatrix()[currentVertex][i] > 0 && colour[i] < 1){
+			if(adjacencyMatrix[currentVertex][i] > 0 && colour[i] < 1){
 				depthFirstTimer(g, i, colour, times, timer);
 			}
 		}
