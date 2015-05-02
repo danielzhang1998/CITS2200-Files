@@ -8,13 +8,17 @@ import CITS2200.Path;
 
 
 /**
+ * Examples of using Dijkstra's and Prim's Algorithms
+ * Implementations
+ * Could have one process for both as they are almost
+ * the same greedy BFS algorithm except that Dijkstra's
+ * accumulates while Prim's simply retains the minimum
+ * edge.
  * @author Pradyumn
  *
  */
 public class PathImp implements Path{
 	
-	
-
 	@Override
 	/*
 	 *	Implementation of Prim's to find Minimum
@@ -26,16 +30,16 @@ public class PathImp implements Path{
 	 */
 	public int getMinSpanningTree(Graph g) {
 		//		Check if graph is null
-		if(g == null) throw new NullPointerException("Graph is empty.");
 		int numVertices = g.getNumberOfVertices();
+		if(numVertices == 0) throw new IllegalValue("Graph is empty.");
 		int[] colour = new int[numVertices];
 		int[] parent = new int[numVertices];
 		//	Set parents as unknown
 		Arrays.fill(parent,-1);
 		int[] distance = new int[numVertices];
-		//	Set distances / weights as unknown, in this case infinity
-		//	Need to use a positive unreachable as looking for shortest
-		Arrays.fill(distance, Integer.MAX_VALUE);
+		//	Set distances / weights as unknown, use -1
+		//	assuming non-negative edges not provided
+		Arrays.fill(distance, -1);
 		
 		//	Assign a variable for the adjacency matrix for a single function
 		//	call
@@ -60,32 +64,32 @@ public class PathImp implements Path{
 			//	skip iteration
 			if(colour[breadSlice] != 0) continue;
 			
-			//	Now has been seen
+			//	Now has been seen / processed
 			colour[breadSlice] = 1;
  					
 			for(int i = 0; i < numVertices; ++i){
 				int edgeCost = sliceWeight[breadSlice][i];
-				if(breadSlice != i && edgeCost > 0 && colour[i] <1){
+				if(edgeCost > 0 && colour[i] <1){
 					//	If current noted distance to i > distance to parent + edge
 					//	replace distance for i and place in priority queue
 					//	This takes care of unfound vertices and selecting the
 					//	minimum cost vertex from a point at the same time
 					//	Keeps a cumulative total going.
-					if(distance[i] > edgeCost){
+					if(distance[i] == -1 || distance[i] > edgeCost){
 						distance[i] = edgeCost;
 						parent[i] = breadSlice;
-						toaster.add(new Edge(i,edgeCost));
+						toaster.add(new Edge(i,distance[i]));
 					}
 				}
 			}
 		}
  		int mstWeight = 0;
  		for(int j : distance){
- 			if(j == Integer.MAX_VALUE){
+ 			if(j == -1){
  				mstWeight = -1;
  				break;
  			}
- 			mstWeight += j;
+ 			mstWeight+=j;
  		}
 		return mstWeight;
 	}
@@ -99,16 +103,20 @@ public class PathImp implements Path{
 	@Override
 	public int[] getShortestPaths(Graph g, int startVertex) {
 		//	Check if graph is null
-		if(g == null) throw new NullPointerException("Graph is empty.");
 		int numVertices = g.getNumberOfVertices();
+		if(numVertices == 0) throw new IllegalValue("Graph is empty.");
 		int[] colour = new int[numVertices];
 		int[] parent = new int[numVertices];
 		//	Set parents as unknown
 		Arrays.fill(parent,-1);
 		int[] distance = new int[numVertices];
-		//	Set distances / weights as unknown, in this case infinity
+		//	Set distances / weights as unknown, in this case -1
+		//	Known that Dijkstra's can't be used for negative weighted
+		//	graphs, assumption that there will be none in this case
+		//	instead of using infinity to make output easily accessible
+		//	for test.
 		//	Need to use a positive unreachable as looking for shortest
-		Arrays.fill(distance, Integer.MAX_VALUE);
+		Arrays.fill(distance, -1);
 		
 		//	Assign a variable for the adjacency matrix for a single function
 		//	call
@@ -129,9 +137,9 @@ public class PathImp implements Path{
 			//	Check if already processed, if processed
 			//	skip iteration
 			if(colour[breadSlice] != 0) continue;
-			//	Mark vertex from queue as seen
+			//	Mark vertex from queue as processed
 			colour[breadSlice] = 1;
-			
+
 			for(int i = 0; i < numVertices; ++i){
 				int edgeCost = sliceWeight[breadSlice][i];
 				if(edgeCost > 0 && colour[i] <1){
@@ -140,19 +148,14 @@ public class PathImp implements Path{
 					//	This takes care of unfound vertices and selecting the
 					//	minimum cost vertex from a point at the same time
 					//	Keeps a cumulative total going.
-					if(distance[i] > distance[breadSlice] + edgeCost){
+					if(distance[i] == -1 || distance[i] > distance[breadSlice] + edgeCost){
 						distance[i] = distance[breadSlice] + edgeCost;
 						parent[i] = breadSlice;
-						toaster.add(new Edge(i,edgeCost));
+						toaster.add(new Edge(i,distance[i]));
 					}
 				}
 			}
 		}
- 		for(int k=0; k < numVertices; ++k){
- 			if(distance[k] == Integer.MAX_VALUE){
- 				distance[k] = -1;
- 			}
- 		}
  		return distance;
 	}
 	
@@ -171,15 +174,16 @@ public class PathImp implements Path{
 			edgeWeight = cost;
 		}
 		
-		
+		//	Comparisons that give higher priority to lower
+		//	valued edges.
 		@Override
-		public int compareTo(Edge otherEdge) {
-			int otherWeight = otherEdge.edgeWeight;
+		public int compareTo(Edge current) {
+			int currentWeight = current.edgeWeight;
 			
-			if(edgeWeight < otherWeight){
+			if(edgeWeight < currentWeight){
 				return -1;
 			}
-			else if(edgeWeight > otherWeight){
+			else if(edgeWeight > currentWeight){
 				return 1;
 			}
 			else return 0;
