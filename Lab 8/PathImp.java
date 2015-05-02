@@ -27,10 +27,6 @@ public class PathImp implements Path{
 	public int getMinSpanningTree(Graph g) {
 		//		Check if graph is null
 		if(g == null) throw new NullPointerException("Graph is empty.");
-		//	Check if graph is directed (Algorithm does not work on directed graphs)
-		//if(g.isDirected()){
-			//throw new IllegalValue("Graph is Directed, must be Undirected for valid output.");
-		//}
 		int numVertices = g.getNumberOfVertices();
 		int[] colour = new int[numVertices];
 		int[] parent = new int[numVertices];
@@ -58,10 +54,15 @@ public class PathImp implements Path{
  		while(!toaster.isEmpty()){
  			//	Take head of priority queue
 			//	Extract vertex from edge			
-			int breadSlice = toaster.poll().vertex;
-			//	Mark vertex from queue as seen
-			colour[breadSlice] = 1;
+			int breadSlice = toaster.remove().vertex;
 			
+			//	Check if already processed, if processed
+			//	skip iteration
+			if(colour[breadSlice] != 0) continue;
+			
+			//	Now has been seen
+			colour[breadSlice] = 1;
+ 					
 			for(int i = 0; i < numVertices; ++i){
 				int edgeCost = sliceWeight[breadSlice][i];
 				if(breadSlice != i && edgeCost > 0 && colour[i] <1){
@@ -71,14 +72,12 @@ public class PathImp implements Path{
 					//	minimum cost vertex from a point at the same time
 					//	Keeps a cumulative total going.
 					if(distance[i] > edgeCost){
-						colour[i] = 1;
 						distance[i] = edgeCost;
 						parent[i] = breadSlice;
 						toaster.add(new Edge(i,edgeCost));
 					}
 				}
 			}
-			colour[breadSlice] = 2;
 		}
  		int mstWeight = 0;
  		for(int j : distance){
@@ -101,10 +100,6 @@ public class PathImp implements Path{
 	public int[] getShortestPaths(Graph g, int startVertex) {
 		//	Check if graph is null
 		if(g == null) throw new NullPointerException("Graph is empty.");
-		//	Check if graph is directed (Algorithm does not work on directed graphs)
-		//if(g.isDirected()){
-			//throw new IllegalValue("Graph is Directed, must be Undirected for valid output.");
-		//}
 		int numVertices = g.getNumberOfVertices();
 		int[] colour = new int[numVertices];
 		int[] parent = new int[numVertices];
@@ -126,32 +121,38 @@ public class PathImp implements Path{
  		//	Arbitrarily use 0 as starting vertex, set distance to self
  		//	as 0 and colour as found.
 		distance[startVertex] = 0;
-		
  		while(!toaster.isEmpty()){
  			//	Take head of priority queue
 			//	Extract vertex from edge			
-			int breadSlice = toaster.poll().vertex;
+			int breadSlice = toaster.remove().vertex;
+			
+			//	Check if already processed, if processed
+			//	skip iteration
+			if(colour[breadSlice] != 0) continue;
 			//	Mark vertex from queue as seen
 			colour[breadSlice] = 1;
 			
 			for(int i = 0; i < numVertices; ++i){
 				int edgeCost = sliceWeight[breadSlice][i];
-				if(breadSlice != i && edgeCost > 0 && colour[i] <1){
+				if(edgeCost > 0 && colour[i] <1){
 					//	If current noted distance to i > distance to parent + edge
 					//	replace distance for i and place in priority queue
 					//	This takes care of unfound vertices and selecting the
 					//	minimum cost vertex from a point at the same time
 					//	Keeps a cumulative total going.
 					if(distance[i] > distance[breadSlice] + edgeCost){
-						colour[i] = 1;
 						distance[i] = distance[breadSlice] + edgeCost;
 						parent[i] = breadSlice;
 						toaster.add(new Edge(i,edgeCost));
 					}
 				}
 			}
-			colour[breadSlice] = 2;
 		}
+ 		for(int k=0; k < numVertices; ++k){
+ 			if(distance[k] == Integer.MAX_VALUE){
+ 				distance[k] = -1;
+ 			}
+ 		}
  		return distance;
 	}
 	
