@@ -1,4 +1,6 @@
 import CITS2200.DuplicateItem;
+import CITS2200.Underflow;
+import CITS2200.ItemNotFound;
 
 /**
  * 
@@ -7,8 +9,8 @@ import CITS2200.DuplicateItem;
 public class RBTree<E extends Comparable<? super E>>{
 	
 	// Global static integers that represent colour state
-	public static final int BLACK = 1;
-	public static final int RED = 0;
+	private static final int BLACK = 1;
+	private static final int RED = 0;
 	// Sentinel nodes
 	private RBnode<E> beforeRoot;	// Parent of root.
 	private RBnode<E> ghostNode;	// All nulls point to this node
@@ -25,13 +27,14 @@ public class RBTree<E extends Comparable<? super E>>{
 	 */
 	public RBTree(){
 		ghostNode = new RBnode<E>(null, ghostNode, ghostNode);
-		//ghostNode.left = ghostNode.right = ghostNode;
+		ghostNode.left = ghostNode.right = ghostNode;
 		beforeRoot = new RBnode<E>(null, ghostNode, ghostNode);
-		//beforeRoot.left = beforeRoot.right = ghostNode;
+		beforeRoot.left = beforeRoot.right = ghostNode;
 	}
 	
 	/**
-	 * Inserts item at the correct point in the tree.
+	 * Inserts item at the correct point in the tree in a top
+	 * down approach, no recursion required.
 	 * Checks for duplicate item, and controls tree structure
 	 * to fit Red Black Tree rules.
 	 * As sentinel beforeRoot is possibly equal to the
@@ -53,10 +56,10 @@ public class RBTree<E extends Comparable<? super E>>{
 			currentNode = compare(freshItem,currentNode) < 0 ?
 					currentNode.left : currentNode.right;
 			// Check for two red children while iterating down tree
-			// Avoids case with red parent and red uncle plus
+			// Avoids case with red parent and red uncle and
 			// moving back up tree to swap colours appropriately
 			if(currentNode.left.colour == RED && currentNode.right.colour == RED){
-				fixTree(freshItem);
+				fixTree(freshItem);	// Colour flip
 			}
 		}
 		// Fail if duplicate item
@@ -75,18 +78,180 @@ public class RBTree<E extends Comparable<? super E>>{
 		fixTree(freshItem);
 	}
 	
-	public void remove(E item){
-		// TODO
+	public void remove(E target){
+		if(!isEmpty()){
+			ghostNode.data = target; // Set loop boundary as externals
+			RBnode<E> siblingNode;			
+			currentNode = parentNode = grandNode = beforeRoot;
+			
+			// Move currentNode to Root for check
+			currentNode = currentNode.right;
+			if(currentNode.left.colour == BLACK 
+					&& currentNode.right.colour == BLACK){
+				// Turn root red
+				currentNode.colour = RED;
+				
+			}
+			
+			// Boolean value to keep track of left or right movement
+			Boolean moveRight = true;
+			// End when finds target, this also checks root
+			while(compare(target, currentNode) != 0){
+				// Update helper nodes
+				greatNode = grandNode;
+				grandNode = parentNode;
+				parentNode = currentNode;
+				siblingNode = siblingOf(currentNode);
+				// Move currentNode based on target value
+				// Store which direction was moved in Boolean
+				if(compare(target,currentNode) < 0){
+					currentNode = currentNode.left;
+					moveRight = false;
+				}
+				else{
+					currentNode = currentNode.right;
+					moveRight = true;
+				}
+				
+				// If currentNode children are both black 3 cases
+				if(currentNode.left.colour == BLACK 
+						&& currentNode.right.colour == BLACK){
+					// Case 1: Sibling's children are both black
+					if(siblingNode.colour == BLACK 
+							&& siblingNode.colour == BLACK ){
+						parentNode.colour = BLACK;
+						currentNode.colour = RED;
+						siblingNode.colour = RED;
+						continue;
+					}
+					// If sibling has red children:
+					if(siblingNode.left.colour == RED || siblingNode.right.colour == RED){
+						// Case 2: Sibling's outer child or both children
+						// are red
+						// Select child data to test outer case
+						RBnode<E> siblingChild = (moveRight) ? siblingNode.left : siblingNode.right;
+						// If statement determines outer case
+						if((compare(siblingChild.data, parentNode)<0) 
+								== (compare(siblingChild.data,siblingNode)<0)){
+							// Single Rotation
+							rotate(siblingNode.data,grandNode);
+							currentNode.colour = RED;
+							parentNode.colour = BLACK;
+							siblingNode.colour = RED;
+							siblingChild.colour = BLACK;
+							continue;
+						}
+						// Case 3: Sibling's inner child is red
+						else{
+							// Change to inner sibling
+							siblingChild = (moveRight) ? siblingNode.right : siblingNode.left;
+							// Double rotation
+							rotate(siblingChild.data,parentNode);
+							rotate(siblingChild.data,grandNode);
+							currentNode.colour = RED;
+							parentNode.colour = BLACK;
+							continue;
+						}	
+					}
+				}
+				// Current Node has a red child since neither is black
+				else{
+					// Move down for a 2 in 3 chance of landing on red
+					greatNode = grandNode;
+					grandNode = parentNode;
+					parentNode = currentNode;
+					currentNode = compare(target,currentNode) < 0 ?
+							currentNode.left : currentNode.right;
+					siblingNode = siblingOf(currentNode);
+					if(currentNode.colour == BLACK){
+						// Sibling guaranteed to be red
+						// Single Rotation
+						rotate(siblingNode.data,grandNode);
+						parentNode.colour = RED;
+						siblingNode.colour = BLACK;
+						// Sibling changes after rotation
+						siblingNode = siblingOf(currentNode);
+						parentNode.colour = BLACK;
+						currentNode.colour = RED;
+						siblingNode.colour = RED;
+						continue;
+					}
+					else{
+						// If child is red
+						continue;
+					}
+				}
+				// Return Root to black colour
+				beforeRoot.right.colour = BLACK;
+			}
+			// Valid target found, delete
+			if(currentNode != ghostNode){
+				// if has 2 children
+				if(currentNode.left != ghostNode && currentNode.right != ghostNode){
+					RBnode<E> focus = currentNode.left;
+					RBnode<E> focusParent = currentNode;
+					while(focus.right != ghostNode){
+						focusParent = focus;
+						focus = focus.right;
+					}
+					currentNode.data = focus.data;
+					focusParent.right = focus.left;
+				}
+				// if has 1 or no children
+				else{
+					if(currentNode.left == ghostNode){
+						currentNode.right = ghostNode;
+					}
+					else
+						currentNode.left = ghostNode;
+				}
+			}
+			else
+				// If currentNode == ghostNode then boundary
+				// reached without finding target.
+				throw new ItemNotFound(target.toString());
+		}
+		else
+			throw new ItemNotFound("Tree is Empty");
 	}
 	
+	/**
+	 * Helper function to attain sibling node.
+	 * Requires calling method to know current parentNode.
+	 * @param node	The node which is known
+	 * @return		The sibling of node.
+	 */
+	private RBnode<E> siblingOf(RBnode<E> node){
+		return (node.data == parentNode.left.data) ? parentNode.right :
+		parentNode.left;
+	}
+	
+	/**
+	 * Finds the minimum data item stored in the tree
+	 * @return	Smallest data item.
+	 */
 	public E findMin(){
-		return null;
-		//	TODO
+		if(isEmpty())
+			throw new Underflow("Tree is Empty");
+		RBnode<E> focus = beforeRoot.right;
+		while(focus.left != ghostNode){
+			focus = focus.left;
+		}
+		return focus.data;
 	}
 	
+	/**
+	 * Finds the maximum data item stored in the tree
+	 * @return	Largest data item.
+	 */
 	public E findMax(){
-		return null;
-		// TODO
+		if(isEmpty())
+			throw new Underflow("Tree is Empty");
+		RBnode<E> focus = beforeRoot.right;
+		while(focus.right != ghostNode){
+			focus = focus.right;
+		}
+		return focus.data;
 	}
 	
 	/**
@@ -112,6 +277,7 @@ public class RBTree<E extends Comparable<? super E>>{
 				return currentNode.data;
 			}
 			else 
+				throw new ItemNotFound(target.toString());
 				return null;
 		}
 	}
@@ -132,7 +298,7 @@ public class RBTree<E extends Comparable<? super E>>{
 	 * present.
 	 */
 	public boolean isEmpty(){
-		return beforeRoot == ghostNode;
+		return beforeRoot.right == ghostNode;
 	}
 	
 	/**
@@ -174,7 +340,6 @@ public class RBTree<E extends Comparable<? super E>>{
 		else{
 			return currentItem.compareTo(tree.data);
 		}
-		
 	}
 	
 	/**
@@ -193,9 +358,9 @@ public class RBTree<E extends Comparable<? super E>>{
 		currentNode.left.colour = BLACK;
 		currentNode.right.colour = BLACK;
 		
-		if(parentNode.colour == RED){	// if parent has red child rotate
+		if(parentNode.colour == RED){	// if parent red need to rotate
 			grandNode.colour = RED;
-			// if inner case (inner left or right) start double rotate
+			// if inner case (left or right) start double rotate
 			if((compare(currentItem, grandNode)<0) != (compare(currentItem,parentNode)<0)){
 				parentNode = rotate(currentItem, grandNode);
 			}
@@ -211,7 +376,7 @@ public class RBTree<E extends Comparable<? super E>>{
 	 * 
 	 * @param currentItem	item/object currently focused passed from fixTree
 	 * @param ancestor	grandparent or great grandparent passed
-	 * 					from fixTree
+	 * 					from fixTree or Remove methods
 	 * @return	returns the root of rotated sub tree
 	 */
 	private RBnode<E> rotate(E currentItem, RBnode<E> ancestor){
