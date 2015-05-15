@@ -174,4 +174,7 @@ public class Dictionary<E extends Comparable<E>>{
 		//	TODO
 		return null;
 	}
+	
+	private static class node
+	
 }
