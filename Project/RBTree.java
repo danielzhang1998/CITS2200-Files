@@ -115,7 +115,7 @@ public class RBTree<E extends Comparable<? super E>>{
 		    	// Move current node down towards target
 		    	currentNode = nextNode(target);
 		    	// If new current node holds target data, save the node
-		    	if(currentNode.data == target){
+		    	if(currentNode.data.equals(target)){
 		    		locked = currentNode;
 		    	}
 		    	if(currentNode.colour == BLACK && nextNode(target).colour == BLACK){
@@ -298,8 +298,10 @@ public class RBTree<E extends Comparable<? super E>>{
 	 */
 	private void printTree(RBnode<E> tree){
 		if(tree != ghostNode){
+			System.out.println("Root is " + beforeRoot.right.data.toString());
 			printTree(tree.left);
 			System.out.println(tree.data);
+			System.out.print((tree.colour==0)?" red\n":" black\n");
 			printTree(tree.right);
 		}
 	}
