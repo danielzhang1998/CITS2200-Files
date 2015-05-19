@@ -88,7 +88,17 @@ public class RBTree<E extends Comparable<? super E>>{
 	 * @return			Returns the next node to move to.
 	 */
 	public RBnode<E> nextNode(E target){
-		return (compare(target,currentNode) < 0) ? currentNode.left : currentNode.right;
+		if(compare(target,currentNode) < 0){
+			return currentNode.left;
+		} 
+		else if(compare(target,currentNode) > 0){
+			return currentNode.right;
+		}
+		// checks for both left and right when passed target
+		// so as not to miss valid nodes
+		else{
+			return (currentNode.left == ghostNode) ? currentNode.right : currentNode.left;
+		}
 	}
 	
 	/**
@@ -118,19 +128,21 @@ public class RBTree<E extends Comparable<? super E>>{
 		    	if(currentNode.data.equals(target)){
 		    		locked = currentNode;
 		    	}
-		    	if(currentNode.colour == BLACK && nextNode(target).colour == BLACK){
-		    		RBnode<E>nextNodeSibling = siblingOf(nextNode(target));
+		    	RBnode<E>nextNode = nextNode(target);
+		    	if(currentNode.colour == BLACK && nextNode.colour == BLACK){
+		    		RBnode<E>nextNodeSibling = siblingOf(nextNode,currentNode);
 					// If nextNode's sibling is red:
 		    		if(nextNodeSibling.colour == RED){
 		    			// rotate red sibling of nextNode with currentNode
 		    			// pushing down currentNode and the nextNode
-		    			rotate(nextNodeSibling.data,parentNode);
 		    			currentNode.colour = RED;
 		    			nextNodeSibling.colour = BLACK;
+		    			rotate(nextNodeSibling.data,parentNode);
+		    			
 	    			}
 		    		// If nextNode's sibling is black:
 		    		else if(nextNodeSibling.colour == BLACK){
-		    			siblingNode = siblingOf(currentNode);
+		    			siblingNode = siblingOf(currentNode, parentNode);
 		    			// If currentNode's sibling exists:
 		    			if(siblingNode != ghostNode){
 		    				// Black Sibling Case 1:
@@ -143,32 +155,42 @@ public class RBTree<E extends Comparable<? super E>>{
 		    					currentNode.colour = RED;
 		    				}
 		    				else{
-		    					// Black Sibling Case 2: Sibling's outer child or both children
-		    					// are red
-		    					// Select child data to test outer case
-		    					// If currentNode moved right then sibling is left
-		    					// and siblingNode.left would select the outer child.
-		    					RBnode<E> siblingChild = (currentNode.data.compareTo(parentNode.data)>0) 
-		    							? siblingNode.left : siblingNode.right;
-		    					// If outer child or both children are red do a single rotation
-		    					if(siblingChild.colour == RED){
-		    						rotate(siblingNode.data, grandNode);
-		    						siblingNode.colour = RED;
-		    						parentNode.colour = BLACK;
+		    					// Find Red nephew
+		    					RBnode<E> redNephew = siblingNode.left.colour == RED ?
+		    							siblingNode.left : siblingNode.right;
+		    					// Black Sibling Case 2: Sibling's outer nephew is red				
+		    					// If siblingNode and redNephew are in
+		    					// different directions to their respective parents.
+		    					// Outer red nephew or 2 red nephews do a single rotation.
+		    					if((redNephew.data.compareTo(siblingNode.data)<0) !=
+		    							siblingNode.data.compareTo(parentNode.data)<0){
 		    						currentNode.colour = RED;
-		    						siblingChild.colour = BLACK;
+		    						parentNode.colour = BLACK;
+		    						siblingNode.colour = BLACK;
+		    						redNephew.colour = RED;
+		    						rotate(redNephew.data, parentNode);
+		    						rotate(redNephew.data, grandNode);
+		    						
+		    						// not really needed?
+		    						//siblingNode.colour = BLACK;
+		    						//redNephew.colour = RED;
+		    						
 		    					}
 		    					// Else is an inner case.
 		    					// Black Sibling Case 3: Sibling's inner child is red
 		    					// Double Rotation
 		    					else{
-		    						// Swap nodes so appropriate sibling is being used
-		    						siblingChild = siblingOf(siblingChild);
-		    						rotate(siblingChild.data, parentNode);
-		    						rotate(siblingChild.data, grandNode);
+		    						
 		    						parentNode.colour = BLACK;
+		    						siblingNode.colour = RED;
+		    						redNephew.colour = BLACK;
 		    						currentNode.colour = RED;
+		    						rotate(siblingNode.data, grandNode);
 		    					}
+		    					//currentNode.colour = RED;
+		    					//redNephew.colour = RED;
+		    					//siblingNode.colour = BLACK;
+		    					//parentNode.colour = BLACK;
 		    				}
 		    			}
 		    		}
@@ -190,21 +212,20 @@ public class RBTree<E extends Comparable<? super E>>{
 		    }
 		    else throw new ItemNotFound(target.toString());
 		    // Root is fixed and made black again
-		    if(!isEmpty()){
-		    	beforeRoot.right.colour = BLACK;
-		    }
+		    beforeRoot.right.colour = BLACK;
 		}
 	}
 	
 	/**
 	 * Helper function to attain sibling node.
 	 * Requires calling method to know current parentNode.
-	 * @param node	The node which is known
+	 * @param node		The node which is known
+	 * @param parent	The known parent of node
 	 * @return		The sibling of node.
 	 */
-	private RBnode<E> siblingOf(RBnode<E> node){
-		return (node.data == parentNode.left.data) ? parentNode.right :
-		parentNode.left;
+	private RBnode<E> siblingOf(RBnode<E> node, RBnode<E> parent){
+		return (node.data == parent.left.data) ? parent.right :
+			parent.left;
 	}
 	
 	/**
