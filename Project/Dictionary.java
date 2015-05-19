@@ -259,12 +259,11 @@ public class Dictionary<E extends Comparable<E>>{
 	    Dnode<E> locked = null;
 	    
 	    // Set values for helper nodes
-	    greatNode = grandNode = parentNode = currentNode = beforeRoot;
+	    grandNode = parentNode = currentNode = beforeRoot;
 	    
 	    // Search for the target node
 	    while (nextNode(target) != ghostNode){
 	    	// Update helpers at start of loop
-	    	greatNode = grandNode;
 	    	grandNode = parentNode;
 	    	parentNode = currentNode;
 	    	// Move current node down towards target
@@ -273,19 +272,20 @@ public class Dictionary<E extends Comparable<E>>{
 	    	if(currentNode.data.equals(target)){
 	    		locked = currentNode;
 	    	}
-	    	if(currentNode.colour == BLACK && nextNode(target).colour == BLACK){
-	    		Dnode<E>nextNodeSibling = siblingOf(nextNode(target));
+	    	Dnode<E> nextNode = nextNode(target);
+	    	if(currentNode.colour == BLACK && nextNode.colour == BLACK){
+	    		Dnode<E>nextNodeSibling = siblingOf(nextNode, currentNode);
 				// If nextNode's sibling is red:
 	    		if(nextNodeSibling.colour == RED){
 	    			// rotate red sibling of nextNode with currentNode
 	    			// pushing down currentNode and the nextNode
-	    			rotate(nextNodeSibling.data,parentNode);
 	    			currentNode.colour = RED;
 	    			nextNodeSibling.colour = BLACK;
+	    			parentNode = rotate(nextNodeSibling.data,parentNode);
     			}
 	    		// If nextNode's sibling is black:
 	    		else if(nextNodeSibling.colour == BLACK){
-	    			siblingNode = siblingOf(currentNode);
+	    			siblingNode = siblingOf(currentNode, parentNode);
 	    			// If currentNode's sibling exists:
 	    			if(siblingNode != ghostNode){
 	    				// Black Sibling Case 1:
@@ -300,29 +300,26 @@ public class Dictionary<E extends Comparable<E>>{
 	    				else{
 	    					// Black Sibling Case 2: Sibling's outer child or both children
 	    					// are red
-	    					// Select child data to test outer case
-	    					// If currentNode moved right then sibling is left
-	    					// and siblingNode.left would select the outer child.
-	    					Dnode<E> siblingChild = (currentNode.data.compareTo(parentNode.data)>0) 
-	    							? siblingNode.left : siblingNode.right;
+	    					// Arbitrarily pick node.
+	    					Dnode<E> redNephew = siblingNode.left.colour == RED ?
+	    							siblingNode.left : siblingNode.right;
 	    					// If outer child or both children are red do a single rotation
-	    					if(siblingChild.colour == RED){
-	    						rotate(siblingNode.data, grandNode);
-	    						siblingNode.colour = RED;
+	    					if((redNephew.data.compareTo(siblingNode.data)<0) ==
+	    							siblingNode.data.compareTo(parentNode.data)<0){
 	    						parentNode.colour = BLACK;
+	    						siblingNode.colour = RED;
+	    						redNephew.colour = BLACK;
 	    						currentNode.colour = RED;
-	    						siblingChild.colour = BLACK;
+	    						rotate(siblingNode.data, grandNode);
 	    					}
 	    					// Else is an inner case.
 	    					// Black Sibling Case 3: Sibling's inner child is red
 	    					// Double Rotation
 	    					else{
-	    						// Swap nodes so appropriate sibling is being used
-	    						siblingChild = siblingOf(siblingChild);
-	    						rotate(siblingChild.data, parentNode);
-	    						rotate(siblingChild.data, grandNode);
-	    						parentNode.colour = BLACK;
 	    						currentNode.colour = RED;
+	    						parentNode.colour = BLACK;
+	    						rotate(redNephew.data, parentNode);
+	    						rotate(redNephew.data, grandNode);
 	    					}
 	    				}
 	    			}
@@ -577,12 +574,13 @@ public class Dictionary<E extends Comparable<E>>{
 	/**
 	 * Helper function to attain sibling node.
 	 * Requires calling method to know current parentNode.
-	 * @param node	The node which is known
+	 * @param node		The node which is known
+	 * @param parent	Direct parent to node
 	 * @return		The sibling of node.
 	 */
-	private Dnode<E> siblingOf(Dnode<E> node){
-		return (node.data == parentNode.left.data) ? parentNode.right :
-		parentNode.left;
+	private Dnode<E> siblingOf(Dnode<E> node, Dnode<E> parent){
+		return (node.data == parent.left.data) ? parent.right :
+		parent.left;
 	}
 	
 	/**

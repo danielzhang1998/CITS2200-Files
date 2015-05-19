@@ -289,7 +289,7 @@ public class DictionaryTest extends TestCase {
 		d.add("100");
 		assertTrue("Delete red node with red sibling", d.delete("30"));
 		d.add("30");
-		assertTrue("Delete black node with a black sibling which as red child", d.delete("10"));
+		assertTrue("Delete black node with a black sibling which has red child", d.delete("10"));
 		d.add("10");
 		d.add("100");
 		d.add("25");
@@ -297,8 +297,7 @@ public class DictionaryTest extends TestCase {
 		for(Integer j = 0; j < 10000; j++){
 			d.add(j.toString());
 		}
-		assertTrue(d.contains("9999"));
-		for(Integer k = 0; k < 49; k++){
+		for(Integer k = 0; k < 10000; k++){
 			assertTrue("Delete multiple items", d.delete(k.toString()));
 		}
 	}

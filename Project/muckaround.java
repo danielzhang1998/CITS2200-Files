@@ -1,5 +1,6 @@
 import java.util.TreeSet;
 
+import CITS2200.ItemNotFound;
 import CITS2200.WindowLinked;
 
 
@@ -11,18 +12,28 @@ public class muckaround {
 		
 		RBTree<String> d = new RBTree<String>();
 		
-		for(Integer j = 0; j <11; j++){
+		for(Integer j = 0; j <10000; j++){
 			d.insert(j.toString());
 		}
-		
-		d.remove("0");
-		d.printTree();
-		d.remove("1");
-		
-		/*for(Integer k = 0; k<11; k++){
+			
+		for(Integer k = 0; k<10000; k++){
 			d.remove(k.toString());
 		}
-		*/
+		
+		
+		
+		
+		
+		/*Dictionary<String> e = new Dictionary<String>();
+		
+		for(Integer j = 0; j <10000; j++){
+			e.add(j.toString());
+		}
+			
+		for(Integer k = 0; k<10000; k++){
+			e.delete(k.toString());
+		}*/
+		
 		
 		
 		

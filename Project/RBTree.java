@@ -88,20 +88,8 @@ public class RBTree<E extends Comparable<? super E>>{
 	 * @return			Returns the next node to move to.
 	 */
 	public RBnode<E> nextNode(E target){
-		if(compare(target,currentNode) < 0){
-			return currentNode.left;
-		} 
-		else{
-			return currentNode.right;
-		}
-		//else(compare(target,currentNode) > 0){
-			//return currentNode.right;
-		//}
-		// checks for both left and right when passed target
-		// so as not to miss valid nodes
-		//else{
-			//return (currentNode.left == ghostNode) ? currentNode.right : currentNode.left;
-		//}
+		return (compare(target,currentNode) < 0) ? 
+				currentNode.left : currentNode.right;
 	}
 	
 	/**
@@ -138,6 +126,7 @@ public class RBTree<E extends Comparable<? super E>>{
 		    		if(nextNodeSibling.colour == RED){
 		    			// rotate red sibling of nextNode with currentNode
 		    			// pushing down currentNode and the nextNode
+		    			// reassign parentNode due to shuffle
 		    			currentNode.colour = RED;
 		    			nextNodeSibling.colour = BLACK;
 		    			parentNode = rotate(nextNodeSibling.data,parentNode);
@@ -162,38 +151,26 @@ public class RBTree<E extends Comparable<? super E>>{
 		    					RBnode<E> redNephew = siblingNode.left.colour == RED ?
 		    							siblingNode.left : siblingNode.right;
 		    					// Black Sibling Case 2: Sibling's outer nephew is red				
-		    					// If siblingNode and redNephew are in
-		    					// different directions to their respective parents.
+		    					// If siblingNode and redNephew are in the same direction
+		    					// from their respective parents, redNephew is outer.
 		    					// Outer red nephew or 2 red nephews do a single rotation.
-		    					if((redNephew.data.compareTo(siblingNode.data)<0) !=
+		    					if((redNephew.data.compareTo(siblingNode.data)<0) ==
 		    							siblingNode.data.compareTo(parentNode.data)<0){
-		    						currentNode.colour = RED;
-		    						parentNode.colour = BLACK;
-		    						//siblingNode.colour = BLACK;
-		    						//redNephew.colour = RED;
-		    						rotate(redNephew.data, parentNode);
-		    						rotate(redNephew.data, grandNode);
-		    						
-		    						// not really needed?
-		    						//siblingNode.colour = BLACK;
-		    						//redNephew.colour = RED;
-		    						
-		    					}
-		    					// Else is an inner case.
-		    					// Black Sibling Case 3: Sibling's inner child is red
-		    					// Double Rotation
-		    					else{
-		    						
 		    						parentNode.colour = BLACK;
 		    						siblingNode.colour = RED;
 		    						redNephew.colour = BLACK;
 		    						currentNode.colour = RED;
 		    						rotate(siblingNode.data, grandNode);
 		    					}
-		    					//currentNode.colour = RED;
-		    					//redNephew.colour = RED;
-		    					//siblingNode.colour = BLACK;
-		    					//parentNode.colour = BLACK;
+		    					// Else is an inner case.
+		    					// Black Sibling Case 3: Sibling's inner child is red
+		    					// Double Rotation
+		    					else{
+		    						currentNode.colour = RED;
+		    						parentNode.colour = BLACK;
+		    						rotate(redNephew.data, parentNode);
+		    						rotate(redNephew.data, grandNode);
+		    					}
 		    				}
 		    			}
 		    		}
