@@ -91,14 +91,17 @@ public class RBTree<E extends Comparable<? super E>>{
 		if(compare(target,currentNode) < 0){
 			return currentNode.left;
 		} 
-		else if(compare(target,currentNode) > 0){
+		else{
 			return currentNode.right;
 		}
+		//else(compare(target,currentNode) > 0){
+			//return currentNode.right;
+		//}
 		// checks for both left and right when passed target
 		// so as not to miss valid nodes
-		else{
-			return (currentNode.left == ghostNode) ? currentNode.right : currentNode.left;
-		}
+		//else{
+			//return (currentNode.left == ghostNode) ? currentNode.right : currentNode.left;
+		//}
 	}
 	
 	/**
@@ -137,7 +140,7 @@ public class RBTree<E extends Comparable<? super E>>{
 		    			// pushing down currentNode and the nextNode
 		    			currentNode.colour = RED;
 		    			nextNodeSibling.colour = BLACK;
-		    			rotate(nextNodeSibling.data,parentNode);
+		    			parentNode = rotate(nextNodeSibling.data,parentNode);
 		    			
 	    			}
 		    		// If nextNode's sibling is black:
@@ -166,8 +169,8 @@ public class RBTree<E extends Comparable<? super E>>{
 		    							siblingNode.data.compareTo(parentNode.data)<0){
 		    						currentNode.colour = RED;
 		    						parentNode.colour = BLACK;
-		    						siblingNode.colour = BLACK;
-		    						redNephew.colour = RED;
+		    						//siblingNode.colour = BLACK;
+		    						//redNephew.colour = RED;
 		    						rotate(redNephew.data, parentNode);
 		    						rotate(redNephew.data, grandNode);
 		    						
@@ -279,8 +282,7 @@ public class RBTree<E extends Comparable<? super E>>{
 				return currentNode.data;
 			}
 			else 
-				throw new ItemNotFound(target.toString());
-				return null;
+				throw new ItemNotFound(target.toString() + "in find");
 		}
 	}
 	
