@@ -30,7 +30,6 @@ public class Dictionary<E extends Comparable<E>>{
 	private Dnode<E> parentNode;	// Assists add and delete
 	private Dnode<E> grandNode;		// Assists add and delete
 	private Dnode<E> greatNode;		// Assists add
-	private Dnode<E> siblingNode;	// Assists delete
 	// String Builder for Log
 	private StringBuilder dictionaryLog;
 	
@@ -277,52 +276,49 @@ public class Dictionary<E extends Comparable<E>>{
 	    		Dnode<E>nextNodeSibling = siblingOf(nextNode, currentNode);
 				// If nextNode's sibling is red:
 	    		if(nextNodeSibling.colour == RED){
-	    			// rotate red sibling of nextNode with currentNode
+	    			// Red Child Case:
+	    			// Rotate red child into currentNode
 	    			// pushing down currentNode and the nextNode
 	    			currentNode.colour = RED;
 	    			nextNodeSibling.colour = BLACK;
 	    			parentNode = rotate(nextNodeSibling.data,parentNode);
     			}
-	    		// If nextNode's sibling is black:
-	    		else if(nextNodeSibling.colour == BLACK){
-	    			siblingNode = siblingOf(currentNode, parentNode);
-	    			// If currentNode's sibling exists:
-	    			if(siblingNode != ghostNode){
-	    				// Black Sibling Case 1:
-	    				// If both siblingNode's children are black:
-	    				if(siblingNode.left.colour == BLACK && 
-	    						siblingNode.right.colour == BLACK){
-	    					// Swap colours between levels
-	    					parentNode.colour = BLACK;
-	    					siblingNode.colour = RED;
-	    					currentNode.colour = RED;
-	    				}
-	    				else{
-	    					// Black Sibling Case 2: Sibling's outer child or both children
-	    					// are red
-	    					// Arbitrarily pick node.
-	    					Dnode<E> redNephew = siblingNode.left.colour == RED ?
-	    							siblingNode.left : siblingNode.right;
-	    					// If outer child or both children are red do a single rotation
-	    					if((redNephew.data.compareTo(siblingNode.data)<0) ==
-	    							siblingNode.data.compareTo(parentNode.data)<0){
-	    						parentNode.colour = BLACK;
-	    						siblingNode.colour = RED;
-	    						redNephew.colour = BLACK;
-	    						currentNode.colour = RED;
-	    						rotate(siblingNode.data, grandNode);
-	    					}
-	    					// Else is an inner case.
-	    					// Black Sibling Case 3: Sibling's inner child is red
-	    					// Double Rotation
-	    					else{
-	    						currentNode.colour = RED;
-	    						parentNode.colour = BLACK;
-	    						rotate(redNephew.data, parentNode);
-	    						rotate(redNephew.data, grandNode);
-	    					}
-	    				}
-	    			}
+	    		// Else sibling is black and if not ghostNode:
+	    		else if(siblingOf(currentNode,parentNode) != ghostNode){
+	    			Dnode<E>siblingNode = siblingOf(currentNode, parentNode);
+    				// Black Sibling Case 1:
+    				// If both siblingNode's children are black:
+    				if(siblingNode.left.colour == BLACK && 
+    						siblingNode.right.colour == BLACK){
+    					// Swap colours between levels
+    					parentNode.colour = BLACK;
+    					siblingNode.colour = RED;
+    					currentNode.colour = RED;
+    				}
+    				else{
+    					// Black Sibling Case 2: Outer nephew or both nephews
+    					// are red
+    					// Arbitrarily pick node.
+    					Dnode<E> redNephew = siblingNode.left.colour == RED ?
+    							siblingNode.left : siblingNode.right;
+    					// If outer child or both children are red do a single rotation
+    					if((redNephew.data.compareTo(siblingNode.data)<0) ==
+    							siblingNode.data.compareTo(parentNode.data)<0){
+    						parentNode.colour = BLACK;
+    						siblingNode.colour = RED;
+    						redNephew.colour = BLACK;
+    						currentNode.colour = RED;
+    						rotate(siblingNode.data, grandNode);
+    					}
+    					// Black Sibling Case 3: Inner nephew is red
+    					// Double Rotation
+    					else{
+    						currentNode.colour = RED;
+    						parentNode.colour = BLACK;
+    						rotate(redNephew.data, parentNode);
+    						rotate(redNephew.data, grandNode);
+    					}
+    				}
 	    		}
 	    	}
 	    }
@@ -339,6 +335,7 @@ public class Dictionary<E extends Comparable<E>>{
 	    		parentNode.left = (currentNode.left == ghostNode) 
 	    				? currentNode.right : currentNode.left;
 	    	}
+	    	beforeRoot.right.colour = BLACK;
 	    	modCount++;	// Record Modification
 	    	return true;
 	    }
@@ -375,8 +372,9 @@ public class Dictionary<E extends Comparable<E>>{
 	*ascending order. 
 	*/
 	public Iterator<E> iterator(E start){
+		ghostNode.data = null;
 		if(start != null && !isEmpty()){
-			return new DictionaryIterator(find(start));
+			return new StepIterator(start);
 		}
 		else 
 			throw new OutOfBounds("Null Start Point or Empty Dictionary");
@@ -426,7 +424,6 @@ public class Dictionary<E extends Comparable<E>>{
 	 */
 	private Dnode<E> find(E target){
 		ghostNode.data = target;		// ghostNode is boundary
-		// currentNode is root
 		currentNode = beforeRoot.right;
 		while(true){
 			if(target.compareTo(currentNode.data)<0){
@@ -616,23 +613,40 @@ public class Dictionary<E extends Comparable<E>>{
 		 * Constructor for initial start point is known
 		 * @param startNode	Starting node, included in iteration.
 		 */
-		public DictionaryIterator(Dnode<E> startNode){
-			if(startNode == ghostNode)
+		public DictionaryIterator(E start){
+			if(start == ghostNode)
 				throw new OutOfBounds("Must start within Dictionary.");
+			ghostNode.data = start;
 			wordPile = new StackLinked<Dnode<E>>();
-			wordPile.push(startNode);
+			Dnode<E> walk = beforeRoot.right;
+			if(start.compareTo(beforeRoot.right.data)>0){
+				while(walk != ghostNode){
+					if(start.compareTo(walk.data)<=0){
+						wordPile.push(walk);
+						walk = walk.left;
+					}
+				}
+			}
+			else{
+				while(walk != ghostNode){
+					if(start.compareTo(walk.data)<= 0){
+						wordPile.push(walk);
+						walk = walk.left;
+					}
+				}
+			}
 		}
 		
 		/**
 		 * Second constructor for full tree iteration.
 		 */
 		public DictionaryIterator(){
-			Dnode<E> startNode = beforeRoot.right;
+			Dnode<E> walk = beforeRoot.right;
 			wordPile = new StackLinked<Dnode<E>>();
 			// Find minimum value while filling stack
-			while(startNode != ghostNode){
-				wordPile.push(startNode);
-				startNode = startNode.left;
+			while(walk != ghostNode){
+				wordPile.push(walk);
+				walk = walk.left;
 			}
 		}
 		
@@ -644,7 +658,7 @@ public class Dictionary<E extends Comparable<E>>{
 		public boolean hasNext(){
 			if(expectedModCount != modCount)
 				throw new IllegalValue("Concurrent modification.");
-			return !wordPile.isEmpty();
+			return (!wordPile.isEmpty());
 		}
 		
 		/**
@@ -656,15 +670,94 @@ public class Dictionary<E extends Comparable<E>>{
 				throw new OutOfBounds("No further Items.");
 			Dnode<E> focusNode = wordPile.pop();
 			nextItemOut = focusNode.data;
-			if(focusNode.right != ghostNode){	// check right
-				focusNode = focusNode.right;	// move right
+			if(focusNode.right != ghostNode){
+				focusNode = focusNode.right;
 				while(focusNode != ghostNode){
-					wordPile.push(focusNode);	// fill stack
-					focusNode = focusNode.left; // traverse left
-				}
+					wordPile.push(focusNode);
+					focusNode = focusNode.left;
+				}	
 			}
 			nextCalled = true;
 			return nextItemOut;
+		}
+		
+		/**
+		 * Removes the last item called by Next.
+		 * Cannot execute until next method has been called.
+		 * Cannot execute twice in a row.
+		 * Cannot execute unless modCount of current Dictionary
+		 * matches with the instance being iterated over.
+		 * New Iterator required if modCounts do not match up.
+		 */
+		public void remove(){
+			if(expectedModCount != modCount)
+				throw new IllegalValue("Concurrent modification.");
+			if(nextCalled)
+				delete(nextItemOut);
+			else
+				throw new OutOfBounds("Cannot remove without calling next.");
+			nextCalled = false; // Cannot run twice in a row
+			// Record modification to structure in iterator
+			expectedModCount++;
+		}
+	}
+	
+	/**
+	 * Iterator class that starts at a certain item.
+	 * @author Pradyumn
+	 *
+	 */
+	private class StepIterator implements Iterator<E>{
+		// Sets expectedModCount for this instance of 
+		// DictionaryIterator 
+		private int expectedModCount = modCount;
+		// Keep track of next method to allow valid remove
+		private boolean nextCalled = false;
+		private E nextItemOut;
+		private E focus;
+		boolean first;
+		private E whisker;
+		
+		/**
+		 * Constructor for initial start point is known
+		 * @param startNode	Starting node, included in iteration.
+		 */
+		public StepIterator(E start){
+			focus = nextItemOut = start;
+			first = true;
+		}
+		
+		/**
+		 * @return true if successor to nextItemOut exists
+		 */
+		@Override
+		public boolean hasNext(){
+			if(expectedModCount != modCount)
+				throw new IllegalValue("Concurrent modification.");
+			return hasSuccessor(nextItemOut);
+		}
+		
+		/**
+		 * Returns next item in order.
+		 */
+		@Override
+		public E next() throws OutOfBounds{
+			
+			//if(!hasNext()){
+				//throw new OutOfBounds("No further Items.");
+			//}
+			//else{
+				
+				nextCalled = true;
+				if(first){
+					first = false;
+					return nextItemOut;
+				}else{
+					focus = nextItemOut;
+					nextItemOut = successor(nextItemOut);
+					return nextItemOut;
+				}
+			//}
 		}
 		
 		/**

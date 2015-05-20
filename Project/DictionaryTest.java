@@ -1,4 +1,7 @@
+import CITS2200.IllegalValue;
 import CITS2200.ItemNotFound;
+import CITS2200.Iterator;
+import CITS2200.OutOfBounds;
 import junit.framework.TestCase;
 
 /**
@@ -306,14 +309,66 @@ public class DictionaryTest extends TestCase {
 	 * Test method for {@link Dictionary#iterator()}.
 	 */
 	public final void testIterator() {
-		fail("Not yet implemented"); // TODO
+		// empty test
+		try{
+			Iterator<String> emptyIterator = emptyDictionary.iterator();
+			emptyIterator.next();
+			fail("Dictionary is Empty.");
+		}catch (ItemNotFound expectedException){
+			assertTrue(true);
+		}
+		
+		// single item test test
+		Dictionary<String> d = new Dictionary<String>();
+		d.add("zz");
+		Iterator<String> singleIterator = d.iterator();
+		assertEquals("zz",singleIterator.next());
+		try{
+			singleIterator.next();
+			fail("Dictionary is empty after single iteration.");
+		}catch(OutOfBounds expectedException){
+			assertTrue(true);
+		}
+		// add more items
+		d.add("ww");
+		d.add("bb");
+		d.add("ss");
+		d.add("aa");
+		// check if it is fail fast
+		try{
+			singleIterator.next();
+			fail("Should fail if calling next after modifying Dictionary");
+		}catch(IllegalValue expectedException){
+			assertTrue(true);
+		}
+		// Create new iterator for new Dictionary instance
+		Iterator<String> fullIterator = d.iterator();
+		assertEquals("aa",fullIterator.next());
+		assertEquals("bb",fullIterator.next());
+		assertEquals("ss",fullIterator.next());
+		assertEquals("ww",fullIterator.next());
+		assertEquals("zz",fullIterator.next());
 	}
 
 	/**
 	 * Test method for {@link Dictionary#iterator(java.lang.Comparable)}.
 	 */
 	public final void testIteratorE() {
-		fail("Not yet implemented"); // TODO
+		// has the exact same methods as iterator
+		// just different starting point
+		Dictionary<String> d = new Dictionary<String>();
+		d.add("zz");
+		d.add("ww");
+		d.add("bb");
+		d.add("ss");
+		d.add("aa");
+		d.add("cc");
+		d.add("aa");
+		Iterator<String> startFromC = d.iterator("cc");
+		assertEquals("cc",startFromC.next());
+		assertEquals("ss",startFromC.next());
+		assertEquals("ww",startFromC.next());
+		assertEquals("zz",startFromC.next());
 	}
 
 	/**

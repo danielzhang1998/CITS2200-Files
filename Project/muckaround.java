@@ -1,6 +1,7 @@
 import java.util.TreeSet;
 
 import CITS2200.ItemNotFound;
+import CITS2200.Iterator;
 import CITS2200.WindowLinked;
 
 
@@ -9,30 +10,75 @@ public class muckaround {
 	private final static int D = 0;
 
 	public static void main(String[] args) {
+
+		Dictionary<String> d = new Dictionary<String>();
+		//Iterator<String> di = d.iterator();
+		//System.out.println(di.next().toString());
 		
-		RBTree<String> d = new RBTree<String>();
-		
-		for(Integer j = 0; j <10000; j++){
-			d.insert(j.toString());
+		try{
+			Iterator<String> d1 = d.iterator();
+			System.out.println(d1.next().toString());
+		}catch(ItemNotFound expectedException){
+			System.out.println("caught");
 		}
-			
-		for(Integer k = 0; k<10000; k++){
-			d.remove(k.toString());
+
+		d.add("ff");
+		d.add("bb");
+		d.add("cc");
+		d.add("dd");
+		d.add("ee");
+		d.add("aa");
+		d.add("zz");
+		d.add("ww");
+		d.add("bb");
+		d.add("ss");
+		d.add("aa");
+		d.add("cc");
+		d.add("aa");
+		
+		//System.out.println(d.max());
+				
+		Iterator<String>di = d.iterator("zz");
+			while(di.hasNext()){
+			System.out.println(di.next().toString());
 		}
+		/*
+		System.out.println("----------");
+		d.add("zz");
+		d.add("ww");
+		d.add("bb");
+		d.add("ss");
+		d.add("aa");
+		d.add("cc");
+		d.add("aa");
+		Iterator<String> startFromC = d.iterator("aa");
+		while(startFromC.hasNext()){
+			System.out.println(startFromC.next().toString());
+		}*/
 		
 		
 		
 		
 		
-		/*Dictionary<String> e = new Dictionary<String>();
 		
-		for(Integer j = 0; j <10000; j++){
+		
+		
+		
+		
+		
+		/*for(Integer j = 0; j <10000; j++){
 			e.add(j.toString());
 		}
 			
 		for(Integer k = 0; k<10000; k++){
-			e.delete(k.toString());
+			if(!e.delete(k.toString())){
+				System.out.println("broken");
+				break;
+			}
 		}*/
+		
+		
+		
 		
 		
 		
@@ -58,8 +104,8 @@ public class muckaround {
 		//System.out.println(d.predecessor("mario"));
 		
 		
-		System.out.println("-------------------------");
+		//System.out.println("-------------------------");
 		
 		
-	}
-}
+	
+}}
