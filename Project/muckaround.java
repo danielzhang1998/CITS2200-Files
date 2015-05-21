@@ -1,7 +1,7 @@
+import java.util.Iterator;
 import java.util.TreeSet;
 
 import CITS2200.ItemNotFound;
-import CITS2200.Iterator;
 import CITS2200.WindowLinked;
 
 
@@ -12,22 +12,9 @@ public class muckaround {
 	public static void main(String[] args) {
 
 		Dictionary<String> d = new Dictionary<String>();
-		//Iterator<String> di = d.iterator();
-		//System.out.println(di.next().toString());
 		
-		try{
-			Iterator<String> d1 = d.iterator();
-			System.out.println(d1.next().toString());
-		}catch(ItemNotFound expectedException){
-			System.out.println("caught");
-		}
 
-		d.add("ff");
-		d.add("bb");
-		d.add("cc");
-		d.add("dd");
-		d.add("ee");
-		d.add("aa");
+		
 		d.add("zz");
 		d.add("ww");
 		d.add("bb");
@@ -36,31 +23,14 @@ public class muckaround {
 		d.add("cc");
 		d.add("aa");
 		
-		//System.out.println(d.max());
-				
-		Iterator<String>di = d.iterator("zz");
-			while(di.hasNext()){
-			System.out.println(di.next().toString());
-		}
-		/*
-		System.out.println("----------");
-		d.add("zz");
-		d.add("ww");
-		d.add("bb");
-		d.add("ss");
-		d.add("aa");
-		d.add("cc");
-		d.add("aa");
-		Iterator<String> startFromC = d.iterator("aa");
-		while(startFromC.hasNext()){
-			System.out.println(startFromC.next().toString());
-		}*/
+		d.contains(null);
+		d.predecessor("ww");
 		
+		System.out.println(d.getLogString());
 		
-		
-		
-		
-		
+		Iterator<String> it = d.iterator();
+		it.hasNext();
+		it.hasNext();
 		
 		
 		

@@ -1,6 +1,7 @@
+import java.util.Iterator;
+
 import CITS2200.IllegalValue;
 import CITS2200.ItemNotFound;
-import CITS2200.Iterator;
 import CITS2200.OutOfBounds;
 import junit.framework.TestCase;
 
@@ -348,6 +349,29 @@ public class DictionaryTest extends TestCase {
 		assertEquals("ss",fullIterator.next());
 		assertEquals("ww",fullIterator.next());
 		assertEquals("zz",fullIterator.next());
+		fullIterator.remove();
+		// Create new iterator after remove() function;
+		Iterator<String> afterRemove = d.iterator();
+		assertEquals("aa",afterRemove.next());
+		assertEquals("bb",afterRemove.next());
+		assertEquals("ss",afterRemove.next());
+		assertEquals("ww",afterRemove.next());
+		try{
+			fullIterator.next();
+			fail("Should fail as 'zz' was remove");
+		}catch(OutOfBounds expectedException){
+			assertTrue(true);
+		}
+		//Further Remove Check
+		Iterator<String> doubleRemove = d.iterator();
+		assertEquals("aa",doubleRemove.next());
+		doubleRemove.remove();
+		try{
+			doubleRemove.remove();
+			fail("Should fail if remove called without a prior next() call");
+		}catch(OutOfBounds expectedException){
+			assertTrue(true);
+		}
 	}
 
 	/**
@@ -375,14 +399,24 @@ public class DictionaryTest extends TestCase {
 	 * Test method for {@link Dictionary#getLogString()}.
 	 */
 	public final void testGetLogString() {
-		fail("Not yet implemented"); // TODO
+		Dictionary<String> d = new Dictionary<String>();
+		assertTrue(d.add("zz"));
 	}
 
 	/**
 	 * Test method for {@link Dictionary#toString()}.
 	 */
 	public final void testToString() {
-		fail("Not yet implemented"); // TODO
+		// Empty Dictionary
+		assertEquals("[ ]", emptyDictionary.toString());
+		//  Filled Dictionary
+		Dictionary<Integer> d = new Dictionary<Integer>();
+		d.add(1);
+		d.add(4);
+		d.add(2);
+		d.add(3);
+		d.add(5);
+		assertEquals("[ 1, 2, 3, 4, 5 ]",d.toString());	
 	}
 
 }
