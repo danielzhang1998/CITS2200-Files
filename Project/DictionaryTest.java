@@ -319,7 +319,7 @@ public class DictionaryTest extends TestCase {
 			assertTrue(true);
 		}
 		
-		// single item test test
+		// single item test
 		Dictionary<String> d = new Dictionary<String>();
 		d.add("zz");
 		Iterator<String> singleIterator = d.iterator();

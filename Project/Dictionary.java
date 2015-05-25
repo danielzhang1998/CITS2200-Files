@@ -164,7 +164,7 @@ public class Dictionary<E extends Comparable<E>>{
 				// When ancestor == checkBehind, successor will be
 				// on the correct node.
 				while (ancestor != focus) {
-					count += 3;
+					count+=2;
 					if (focus.data.compareTo(ancestor.data) > 0) {
 						predecessor = ancestor;
 						ancestor = ancestor.right;
@@ -213,7 +213,7 @@ public class Dictionary<E extends Comparable<E>>{
 				// When ancestor == focus, successor will be
 				// on the correct node.
 				while (ancestor != focus) {
-					count += 3;
+					count+=2;
 					if (focus.data.compareTo(ancestor.data) < 0) {
 						successor = ancestor;
 						ancestor = ancestor.left;
@@ -405,8 +405,7 @@ public class Dictionary<E extends Comparable<E>>{
 							// If outer child or both children are red do a single rotation
 							count += 2;
 							if ((redNephew.data.compareTo(siblingNode.data) < 0) == siblingNode.data
-									.compareTo(parentNode.data) < 0) {
-								count += 2;
+									.compareTo(parentNode.data) < 0){
 								parentNode.colour = BLACK;
 								siblingNode.colour = RED;
 								redNephew.colour = BLACK;
@@ -577,7 +576,6 @@ public class Dictionary<E extends Comparable<E>>{
 		}
 	}
 	
-	
 	/**
 	 * Find method iterates through from root to ghostNode
 	 * checking for target item. The ghostNode is temporarily
@@ -605,7 +603,8 @@ public class Dictionary<E extends Comparable<E>>{
 			}
 			else{
 				count+=3;
-				return null;}
+				return null;
+			}
 		}
 	}
 	
@@ -683,7 +682,7 @@ public class Dictionary<E extends Comparable<E>>{
 		if(parentNode.colour == RED){	// if parent red need to rotate
 			grandNode.colour = RED;
 			// if inner case (left or right) start double rotate
-			count+=3;
+			count++;
 			if((compare(currentItem, grandNode)<0) != (compare(currentItem,parentNode)<0)){
 				parentNode = rotate(currentItem, grandNode);
 			}
