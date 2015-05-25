@@ -1,7 +1,4 @@
 import java.util.Iterator;
-import java.util.NoSuchElementException;
-
-import CITS2200.BinaryTree;
 import CITS2200.IllegalValue;
 import CITS2200.ItemNotFound;
 import CITS2200.OutOfBounds;
@@ -35,7 +32,8 @@ public class Dictionary<E extends Comparable<E>>{
 	private Dnode<E> greatNode;		// Assists add
 	// String Builder and count for Log
 	private static StringBuilder dictionaryLog;
-	private int count = 0;
+	private int count;
+	private boolean globalLogging;
 	
 	/**
 	* Class constructor.
@@ -48,6 +46,8 @@ public class Dictionary<E extends Comparable<E>>{
 		beforeRoot = new Dnode<E>(null, ghostNode, ghostNode);
 		beforeRoot.left = beforeRoot.right = ghostNode;
 		dictionaryLog = new StringBuilder("Dictionary Constructued\n--Start Log--\n");
+		globalLogging = false;
+		count = -1;
 	}
 
 	/**
@@ -58,9 +58,13 @@ public class Dictionary<E extends Comparable<E>>{
 	* 			
 	**/
 	public boolean isEmpty(){
-		dictionaryLog.append("Operation isEmpty() completed using 1 comparisons\n");
-		return beforeRoot.right == ghostNode;
-		
+		boolean localLog = log();
+		try {
+			count++;
+			return beforeRoot.right == ghostNode;
+		} finally {
+			if (localLog) log("isEmpty()");
+		}
 	}
 
 	/**
@@ -70,12 +74,19 @@ public class Dictionary<E extends Comparable<E>>{
 	* @return true 	if and only if the Dictionary contains something equal to item.
 	**/
 	public boolean contains(E item){
-		if(item == null){
-			dictionaryLog.append("Operation contains(null) failed using 1 comparisons\n");
-			return false;
+		boolean localLog = log();
+		try {
+			count++;
+			if (item == null || isEmpty()) {
+				localLog = false;
+				return false;
+			}
+			count++;
+			return find(item) != null;
+		} finally {
+			if (localLog)
+				log("contains("+item.toString()+")");
 		}
-		dictionaryLog.append("Operation contains("+ item.toString() +") completed using 2 comparisons\n");
-		return find(item) != null;
 	}
 
 	/**
@@ -84,12 +95,18 @@ public class Dictionary<E extends Comparable<E>>{
 	* @param 	item the item to be checked
 	**/ 
 	public boolean hasPredecessor(E item){
-		if(!isEmpty() && contains(item)){
-			dictionaryLog.append("Operation hasPredecessor("+ item.toString() +") completed using 1 comparisons\n");
-			return min().compareTo(item)<0;
-		}
-		else{
-			return false;
+		boolean localLog = log();
+		try {
+			if (!isEmpty() && contains(item)) {
+				count++;
+				return min().compareTo(item) < 0;
+			} else {
+				localLog = false;
+				return false;
+			}
+		} finally {
+			if (localLog)
+				log("hasPredecessor("+item.toString()+")");
 		}
 	}
 
@@ -99,12 +116,18 @@ public class Dictionary<E extends Comparable<E>>{
 	*@param item the item to be checked
 	**/ 
 	public boolean hasSuccessor(E item){
-		if(!isEmpty() && contains(item)){
-			dictionaryLog.append("Operation hasSuccessor("+ item.toString() +") completed using 2 comparisons\n");
-			return max().compareTo(item)>0;
-		}	
-		else{
-			return false;
+		boolean localLog = log();
+		try {
+			if (!isEmpty() && contains(item)) {
+				count++;
+				return max().compareTo(item) > 0;
+			} else {
+				localLog = false;
+				return false;
+			}
+		} finally {
+			if (localLog)
+				log("hasSuccessor("+item.toString()+")");
 		}
 	}
 
@@ -117,39 +140,45 @@ public class Dictionary<E extends Comparable<E>>{
 	* @throws ItemNotFound if there is no lesser element.
 	**/ 
 	public E predecessor(E item) throws ItemNotFound{
-		count = 1;
-		if(item == null || !hasPredecessor(item)){
-			throw new ItemNotFound("Item has no predecessor");
-		}
-		Dnode<E> focus = find(item);
-		// Alternate
-		// Case 1: left child exists
-		count++;
-		if(focus.left != ghostNode){
-			// Return strict successor by finding the
-			// maximum of the left sub-tree
-			dictionaryLog.append("Operation predecessor("+ item.toString() +") completed using "+count+" comparisons\n");
-			return max(focus.left).data;
-		}
-		// Case 2: left child doesn't exist
-		else{
-			Dnode<E> predecessor = null; // behind traversal
-			// Make root a starting point
-			Dnode<E> ancestor = beforeRoot.right;
-			// When ancestor == checkBehind, successor will be
-			// on the correct node.
-			while(ancestor != focus){
-				count++; count++;
-				if(focus.data.compareTo(ancestor.data)>0){
-					predecessor = ancestor;
-					ancestor = ancestor.right;
-				}
-				// Predecessor doesn't follow when moving the
-				// wrong direction.
-				else ancestor = ancestor.left;
+		boolean localLog = log();
+		try {
+			count++;
+			if (item == null || !hasPredecessor(item)) {
+				localLog = false;
+				throw new ItemNotFound("Item has no predecessor");
 			}
-			dictionaryLog.append("Operation predecessor("+ item.toString() +") completed using "+count+" comparisons\n");
-			return predecessor.data;
+			Dnode<E> focus = find(item);
+			// Alternate
+			// Case 1: left child exists
+			count++;
+			if (focus.left != ghostNode) {
+				// Return strict successor by finding the
+				// maximum of the left sub-tree
+				return max(focus.left).data;
+			}
+			// Case 2: left child doesn't exist
+			else {
+				Dnode<E> predecessor = null; // behind traversal
+				// Make root a starting point
+				Dnode<E> ancestor = beforeRoot.right;
+				// When ancestor == checkBehind, successor will be
+				// on the correct node.
+				while (ancestor != focus) {
+					count += 3;
+					if (focus.data.compareTo(ancestor.data) > 0) {
+						predecessor = ancestor;
+						ancestor = ancestor.right;
+					}
+					// Predecessor doesn't follow when moving the
+					// wrong direction.
+					else
+						ancestor = ancestor.left;
+				}
+				return predecessor.data;
+			}
+		} finally {
+			if (localLog)
+				log("predecessor("+item.toString()+")");
 		}
 	}
 
@@ -160,39 +189,45 @@ public class Dictionary<E extends Comparable<E>>{
 	*@throws ItemNotFound if there is no greater element.
 	**/ 
 	public E successor(E item) throws ItemNotFound{
-		count = 1;
-		if(item == null || !hasSuccessor(item)){
-			throw new ItemNotFound("Item has no successor");
-		}
-		Dnode<E> focus = find(item);
-		// Alternate
-		// Case 1: right child exists
-		count++;
-		if(focus.right != ghostNode){
-			// Return strict successor by finding the
-			// minimum of the right sub-tree
-			dictionaryLog.append("Operation successor("+ item.toString() +") completed using "+count+" comparisons\n");
-			return min(focus.right).data;
-		}
-		// Case 2: right child doesn't exist
-		else{
-			Dnode<E> successor = null; // ahead of traversal
-			// Make root a starting point
-			Dnode<E> ancestor = beforeRoot.right;
-			// When ancestor == focus, successor will be
-			// on the correct node.
-			while(ancestor != focus){
-				count++; count++;
-				if(focus.data.compareTo(ancestor.data)<0){
-					successor = ancestor;
-					ancestor = ancestor.left;
-				}
-				// Successor doesn't move unless in the
-				// direction of the focus.
-				else ancestor = ancestor.right;
+		boolean localLog = log();
+		try {
+			count++;
+			if (item == null || !hasSuccessor(item)) {
+				localLog = false;
+				throw new ItemNotFound("Item has no successor");
 			}
-			dictionaryLog.append("Operation successor("+ item.toString() +") completed using "+count+" comparisons\n");
-			return successor.data;
+			Dnode<E> focus = find(item);
+			// Alternate
+			// Case 1: right child exists
+			count++;
+			if (focus.right != ghostNode) {
+				// Return strict successor by finding the
+				// minimum of the right sub-tree
+				return min(focus.right).data;
+			}
+			// Case 2: right child doesn't exist
+			else {
+				Dnode<E> successor = null; // ahead of traversal
+				// Make root a starting point
+				Dnode<E> ancestor = beforeRoot.right;
+				// When ancestor == focus, successor will be
+				// on the correct node.
+				while (ancestor != focus) {
+					count += 3;
+					if (focus.data.compareTo(ancestor.data) < 0) {
+						successor = ancestor;
+						ancestor = ancestor.left;
+					}
+					// Successor doesn't move unless in the
+					// direction of the focus.
+					else
+						ancestor = ancestor.right;
+				}
+				return successor.data;
+			}
+		} finally {
+			if (localLog)
+				log("successor("+item.toString()+")");
 		}
 	}
 
@@ -202,14 +237,17 @@ public class Dictionary<E extends Comparable<E>>{
 	* @throws ItemNotFound if the Dictionary is empty.
 	**/ 
 	public E min() throws ItemNotFound{
-		count = 0;
-		if(!isEmpty()){
-			dictionaryLog.append("Operation min() completed using 1 comparisons\n");
-			return min(beforeRoot.right).data;
-		}
-		else{
-			dictionaryLog.append("Operation min() failed using "+count+" comparisons\n");
-			throw new ItemNotFound("Tree is Empty");
+		boolean localLog = log();
+		try {
+			if (!isEmpty()) {
+				return min(beforeRoot.right).data;
+			} else {
+				localLog = false;
+				throw new ItemNotFound("Tree is Empty");
+			}
+		} finally {
+			if (localLog)
+				log("min()");
 		}
 	}
 	
@@ -219,14 +257,18 @@ public class Dictionary<E extends Comparable<E>>{
 	*@throws ItemNotFound if the Dictionary is empty.
 	**/ 
 	public E max() throws ItemNotFound{
-		count = 0;
-		if(!isEmpty()){
-			dictionaryLog.append("Operation max() completed using "+count+" comparisons\n");
-			return max(beforeRoot.right).data;
-		}
-		else{
-			dictionaryLog.append("Operation max() failed using "+count+" comparisons\n");
-			throw new ItemNotFound("Tree is Empty");
+		boolean localLog = log();
+		try {
+			count++;
+			if (!isEmpty()) {
+				return max(beforeRoot.right).data;
+			} else {
+				localLog = false;
+				throw new ItemNotFound("Tree is Empty");
+			}
+		} finally {
+			if (localLog)
+				log("max()");
 		}
 	}
 	
@@ -239,52 +281,59 @@ public class Dictionary<E extends Comparable<E>>{
 	* the dictionary.
 	**/
 	public boolean add(E freshItem){
-		count = 1;
-		if(freshItem == null){
-			return false;
-		}
-		// Grand and great nodes used by fixItem method.
-		currentNode = parentNode = grandNode = beforeRoot;
-		// Assigning freshItem to ghostNode.data, catches loop
-		ghostNode.data = freshItem;	// ghostNode is a boundary
-		// End when freshItem is inserted into currentNode
-		while(compare(freshItem, currentNode) != 0){
+		boolean localLog = log();
+		try {
 			count++;
-			greatNode = grandNode;
-			grandNode = parentNode;
-			parentNode = currentNode;
-			// If freshItem is lower go left else go right
-			count++;
-			currentNode = compare(freshItem,currentNode) < 0 ? currentNode.left : currentNode.right;
-			// Check for two red children while iterating down tree
-			// Avoids case with red parent and red uncle and
-			// moving back up tree to swap colours appropriately
-			count+=2;
-			if(currentNode.left.colour == RED && currentNode.right.colour == RED){
-				fixDictionary(freshItem);	// Colour flip
+			if (freshItem == null) {
+				localLog = false;
+				return false;
 			}
+			// Grand and great nodes used by fixItem method.
+			currentNode = parentNode = grandNode = beforeRoot;
+			// Assigning freshItem to ghostNode.data, catches loop
+			ghostNode.data = freshItem; // ghostNode is a boundary
+			// End when freshItem is inserted into currentNode
+			while (compare(freshItem, currentNode) != 0) {
+				count++;
+				greatNode = grandNode;
+				grandNode = parentNode;
+				parentNode = currentNode;
+				// If freshItem is lower go left else go right
+				count++;
+				currentNode = compare(freshItem, currentNode) < 0 ? currentNode.left
+						: currentNode.right;
+				// Check for two red children while iterating down tree
+				// Avoids case with red parent and red uncle and
+				// moving back up tree to swap colours appropriately
+				count++;
+				if (currentNode.left.colour == RED
+						&& currentNode.right.colour == RED) {
+					fixDictionary(freshItem); // Colour flip
+				}
+			}
+			// Fail if duplicate item
+			count++;
+			if (currentNode != ghostNode) {
+				return false;
+			}
+			// Ready currentNode to be inserted with freshItem.
+			// Loop will halt at next iteration.
+			currentNode = new Dnode<E>(freshItem, ghostNode, ghostNode);
+			// Connect parent, 
+			// if less than parent add left else add right
+			count++;
+			if (compare(freshItem, parentNode) < 0)
+				parentNode.left = currentNode;
+			else
+				parentNode.right = currentNode;
+			// Fix tree to make sure Red Black Tree rules followed
+			fixDictionary(freshItem);
+			modCount++; // Record Dictionary modification
+			return true;
+		} finally {
+			if (localLog)
+				log("add("+freshItem.toString()+")");
 		}
-		// Fail if duplicate item
-		count++;
-		if(currentNode != ghostNode){
-			dictionaryLog.append("Operation add("+freshItem.toString()+") failed using "+count+" comparisons\n");
-			return false;
-		}
-		// Ready currentNode to be inserted with freshItem.
-		// Loop will halt at next iteration.
-		currentNode = new Dnode<E>(freshItem, ghostNode, ghostNode);
-		// Connect parent, 
-		// if less than parent add left else add right
-		count++;
-		if(compare(freshItem, parentNode)<0)
-			parentNode.left = currentNode;
-		else
-			parentNode.right = currentNode;
-		// Fix tree to make sure Red Black Tree rules followed
-		fixDictionary(freshItem);
-		modCount++;		// Record Dictionary modification
-		dictionaryLog.append("Operation add("+freshItem.toString()+") completed using "+count+" comparisons\n");
-		return true;
 	}
 
 	/**
@@ -295,110 +344,114 @@ public class Dictionary<E extends Comparable<E>>{
 	* now been removed. False otherwise.
 	**/
 	public boolean delete(E target){
-		count = 1;
-		if (isEmpty() || target == null){
+		boolean localLog = log();
+		try {
+			count++;
+			if (isEmpty() || target == null) {
+				localLog = false;
+				return false;
+			}
+			ghostNode.data = null;
+			Dnode<E> locked = null;
+			// Set values for helper nodes
+			grandNode = parentNode = currentNode = beforeRoot;
+			// Search for the target node
+			while (nextNode(target) != ghostNode) {
+				count++;
+				// Update helpers at start of loop
+				grandNode = parentNode;
+				parentNode = currentNode;
+				// Move current node down towards target
+				currentNode = nextNode(target);
+				// If new current node holds target data, save the node
+				count++;
+				if (currentNode.data.equals(target)) {
+					locked = currentNode;
+				}
+				Dnode<E> nextNode = nextNode(target);
+				count++;
+				if (currentNode.colour == BLACK && nextNode.colour == BLACK) {
+					Dnode<E> nextNodeSibling = siblingOf(nextNode, currentNode);
+					// If nextNode's sibling is red:
+					if (nextNodeSibling.colour == RED) {
+						// Red Child Case:
+						// Rotate red child into currentNode
+						// pushing down currentNode and the nextNode
+						count++;
+						currentNode.colour = RED;
+						nextNodeSibling.colour = BLACK;
+						parentNode = rotate(nextNodeSibling.data, parentNode);
+					}
+					// Else sibling is black and if not ghostNode:
+					else if (siblingOf(currentNode, parentNode) != ghostNode) {
+						count += 2;
+						Dnode<E> siblingNode = siblingOf(currentNode,
+								parentNode);
+						// Black Sibling Case 1:
+						// If both siblingNode's children are black:
+						if (siblingNode.left.colour == BLACK
+								&& siblingNode.right.colour == BLACK) {
+							// Swap colours between levels
+							count++;
+							parentNode.colour = BLACK;
+							siblingNode.colour = RED;
+							currentNode.colour = RED;
+						} else {
+							// Black Sibling Case 2: Outer nephew or both nephews
+							// are red
+							// Arbitrarily pick node.
+							Dnode<E> redNephew = siblingNode.left.colour == RED ? siblingNode.left
+									: siblingNode.right;
+							// If outer child or both children are red do a single rotation
+							count += 2;
+							if ((redNephew.data.compareTo(siblingNode.data) < 0) == siblingNode.data
+									.compareTo(parentNode.data) < 0) {
+								count += 2;
+								parentNode.colour = BLACK;
+								siblingNode.colour = RED;
+								redNephew.colour = BLACK;
+								currentNode.colour = RED;
+								rotate(siblingNode.data, grandNode);
+							}
+							// Black Sibling Case 3: Inner nephew is red
+							// Double Rotation
+							else {
+								currentNode.colour = RED;
+								parentNode.colour = BLACK;
+								rotate(redNephew.data, parentNode);
+								rotate(redNephew.data, grandNode);
+							}
+						}
+					}
+				}
+			}
+			// Replace data of deleted node if found
+			count++;
+			if (locked != null) {
+				locked.data = currentNode.data;
+				// If currentNode is right child assign its children 
+				// as the  right of parentNode, else assign as left child
+				count++;
+				if (parentNode.right == currentNode) {
+					count++;
+					parentNode.right = (currentNode.left == ghostNode) ? currentNode.right
+							: currentNode.left;
+				} else {
+					count++;
+					parentNode.left = (currentNode.left == ghostNode) ? currentNode.right
+							: currentNode.left;
+				}
+				beforeRoot.right.colour = BLACK;
+				modCount++; // Record Modification
+				return true;
+			}
+			// Root is fixed and made black again if it still exists
+			beforeRoot.right.colour = BLACK;
 			return false;
+		} finally {
+			if (localLog)
+				log("delete("+target.toString()+")");
 		}
-		ghostNode.data = null;
-	    Dnode<E> locked = null;
-	    
-	    // Set values for helper nodes
-	    grandNode = parentNode = currentNode = beforeRoot;
-	    
-	    // Search for the target node
-	    while (nextNode(target) != ghostNode){
-	    	count++;
-	    	// Update helpers at start of loop
-	    	grandNode = parentNode;
-	    	parentNode = currentNode;
-	    	// Move current node down towards target
-	    	currentNode = nextNode(target);
-	    	// If new current node holds target data, save the node
-	    	count++;
-	    	if(currentNode.data.equals(target)){
-	    		locked = currentNode;
-	    	}
-	    	Dnode<E> nextNode = nextNode(target);
-	    	count+=2;
-	    	if(currentNode.colour == BLACK && nextNode.colour == BLACK){
-	    		Dnode<E>nextNodeSibling = siblingOf(nextNode, currentNode);
-				// If nextNode's sibling is red:
-	    		count+=2;
-	    		if(nextNodeSibling.colour == RED){
-	    			// Red Child Case:
-	    			// Rotate red child into currentNode
-	    			// pushing down currentNode and the nextNode
-	    			currentNode.colour = RED;
-	    			nextNodeSibling.colour = BLACK;
-	    			parentNode = rotate(nextNodeSibling.data,parentNode);
-    			}
-	    		// Else sibling is black and if not ghostNode:
-	    		else if(siblingOf(currentNode,parentNode) != ghostNode){
-	    			Dnode<E>siblingNode = siblingOf(currentNode, parentNode);
-    				// Black Sibling Case 1:
-    				// If both siblingNode's children are black:
-	    			count+=2;
-    				if(siblingNode.left.colour == BLACK && 
-    						siblingNode.right.colour == BLACK){
-    					// Swap colours between levels
-    					parentNode.colour = BLACK;
-    					siblingNode.colour = RED;
-    					currentNode.colour = RED;
-    				}
-    				else{
-    					// Black Sibling Case 2: Outer nephew or both nephews
-    					// are red
-    					// Arbitrarily pick node.
-    					Dnode<E> redNephew = siblingNode.left.colour == RED ?
-    							siblingNode.left : siblingNode.right;
-    					// If outer child or both children are red do a single rotation
-    					count+=2;
-    					if((redNephew.data.compareTo(siblingNode.data)<0) ==
-    							siblingNode.data.compareTo(parentNode.data)<0){
-    						parentNode.colour = BLACK;
-    						siblingNode.colour = RED;
-    						redNephew.colour = BLACK;
-    						currentNode.colour = RED;
-    						rotate(siblingNode.data, grandNode);
-    					}
-    					// Black Sibling Case 3: Inner nephew is red
-    					// Double Rotation
-    					else{
-    						currentNode.colour = RED;
-    						parentNode.colour = BLACK;
-    						rotate(redNephew.data, parentNode);
-    						rotate(redNephew.data, grandNode);
-    					}
-    				}
-	    		}
-	    	}
-	    }
-	    // Replace data of deleted node if found
-	    count++;
-	    if(locked != null){
-	    	locked.data = currentNode.data;
-	    	// If currentNode is right child assign its children 
-	    	// as the  right of parentNode, else assign as left child
-	    	count++;
-	    	if(parentNode.right == currentNode){
-	    		count++;
-	    		parentNode.right = (currentNode.left == ghostNode) 
-	    				? currentNode.right : currentNode.left;
-	    	}
-	    	else{
-	    		count++;
-	    		parentNode.left = (currentNode.left == ghostNode) 
-	    				? currentNode.right : currentNode.left;
-	    	}
-	    	beforeRoot.right.colour = BLACK;
-	    	modCount++;	// Record Modification
-	    	dictionaryLog.append("Operation delete("+target.toString()+") completed using "+count+" comparisons\n");
-	    	return true;
-	    }
-	    // Root is fixed and made black again if it still exists
-	    beforeRoot.right.colour = BLACK;
-	    dictionaryLog.append("Operation delete("+target.toString()+") failed using "+count+" comparisons\n");
-	    return false;
 	}
 
 	/**
@@ -411,13 +464,16 @@ public class Dictionary<E extends Comparable<E>>{
 	*elements in the Dictionary in ascending order. 
 	*/
 	public Iterator<E> iterator(){
-		if(!isEmpty()){
-			dictionaryLog.append("Operation iterator() completed using 1 comparisons\n");
-			return new DictionaryIterator();
-		}
-		else{
-			dictionaryLog.append("Operation iterator() failed using 1 comparisons\n");
-			throw new ItemNotFound("Empty Dictionary");
+		boolean localLog = log();
+		try {
+			if (!isEmpty()) {
+				return new DictionaryIterator();
+			} else {
+				throw new ItemNotFound("Empty Dictionary");
+			}
+		} finally {
+			if (localLog)
+				log("iterator()");
 		}
 	}
 
@@ -433,13 +489,17 @@ public class Dictionary<E extends Comparable<E>>{
 	*ascending order. 
 	*/
 	public Iterator<E> iterator(E start){
-		if(start != null && !isEmpty()){
-			dictionaryLog.append("Operation iterator("+ start.toString() +") completed using 1 comparisons\n");
-			return new DictionaryIterator(start);
-		}
-		else{
-			dictionaryLog.append("Operation iterator("+ start.toString() +") completed using 1 comparisons\n");
-			throw new OutOfBounds("Null Start Point or Empty Dictionary");
+		boolean localLog = log();
+		try {
+			if (start != null && !isEmpty()) {
+				return new DictionaryIterator(start);
+			} else {
+				localLog = false;
+				throw new OutOfBounds("Null Start Point or Empty Dictionary");
+			}
+		} finally {
+			if (localLog)
+				log("iterator("+start.toString()+")");
 		}
 	}
 
@@ -465,18 +525,58 @@ public class Dictionary<E extends Comparable<E>>{
 	*@return a String representation of the Dictionary
 	**/
 	public String toString(){
-		count = 0;
-		if(isEmpty()) return "[ ]";
-		StringBuilder allWords = new StringBuilder("[ ");
-		Iterator<E> addWords = iterator();
-		while(addWords.hasNext()){
-			allWords.append(String.valueOf(addWords.next()) + ", ");
+		boolean localLog = log();
+		try {
+			if (isEmpty())
+				return "[ ]";
+			StringBuilder allWords = new StringBuilder("[ ");
+			Iterator<E> addWords = iterator();
+			while (addWords.hasNext()) {
+				allWords.append(String.valueOf(addWords.next()) + ", ");
+			}
+			// Replace last comma and space with the closing bracket
+			allWords.replace(allWords.length() - 2, allWords.length(), " ]");
+			return allWords.toString();
+		} finally {
+			if (localLog)
+				log("toString()");
 		}
-		// Replace last comma and space with the closing bracket
-		allWords.replace(allWords.length()-2, allWords.length(), " ]");
-		dictionaryLog.append("Operation toString() completed using "+count+" comparisons\n");
-		return allWords.toString();
 	}
+	
+	/**
+	 * Helper function for getLogString,
+	 * initiates logging of a method and any public
+	 * helper methods used so that a correct comparison
+	 * count is reported rather than a cumulative or
+	 * a poorly counted number of comparisons. 
+	 * @return	Returns true if counting has not begun
+	 * and the globalLogging boolean is false, i.e. a
+	 * new log session can begin.
+	 */
+	private boolean log(){
+		if(count == -1 && !globalLogging){
+			globalLogging = true;
+			count = 0;
+			return true;
+		}
+		else return false;
+	}
+	
+	/**
+	 * 2nd Helper function for getLogString, determines
+	 * when to end a log, the count must have been initiated
+	 * by log() at the start of the method and globalLogging
+	 * must be true.
+	 * @param method
+	 */
+	private void log(String method){
+		if(count != -1 && globalLogging){
+			dictionaryLog.append("Operation "+method+" completed using "+count+" comparisons\n");
+			globalLogging = false;
+			count = -1;
+		}
+	}
+	
 	
 	/**
 	 * Find method iterates through from root to ghostNode
@@ -503,8 +603,9 @@ public class Dictionary<E extends Comparable<E>>{
 				count+=3;
 				return currentNode;
 			}
-			else
-				return null;
+			else{
+				count+=3;
+				return null;}
 		}
 	}
 	
@@ -551,10 +652,12 @@ public class Dictionary<E extends Comparable<E>>{
 	 * 			If not sentinel returns normal comparison. 
 	 * */
 	private final int compare(E currentItem, Dnode<E> node){
+		count++;
 		if(node == beforeRoot){
 			return 1;
 		}
 		else{
+			count++;
 			return currentItem.compareTo(node.data);
 		}
 	}
@@ -602,13 +705,13 @@ public class Dictionary<E extends Comparable<E>>{
 	private Dnode<E> rotate(E currentItem, Dnode<E> ancestor){
 		count++;
 		if(compare(currentItem, ancestor)<0){	// left of grand
-			count+=2;
+			count++;
 			return ancestor.left = compare(currentItem, ancestor.left) < 0 ?
 					rotateRight(ancestor.left) :		// left - left
 						rotateLeft(ancestor.left);	// left - right
 		}
 		else{									// right of grand
-			count+=2;
+			count++;
 			return ancestor.right = compare(currentItem, ancestor.right) < 0 ?
 					rotateRight(ancestor.right) :	// right - left
 						rotateLeft(ancestor.right);	// right - right
@@ -695,6 +798,7 @@ public class Dictionary<E extends Comparable<E>>{
 		 * @param startNode	Starting node, included in iteration.
 		 */
 		public DictionaryIterator(E start){
+			count++;
 			if(start == min()){
 				firstCase = true;
 				nextItemOut = start;
@@ -713,13 +817,17 @@ public class Dictionary<E extends Comparable<E>>{
 		
 		@Override
 		public boolean hasNext(){
-			count++;
-			if(expectedModCount != modCount){
-				dictionaryLog.append("Operation iterator.hasNext() failed using "+count+" comparisons\n");
-				throw new IllegalValue("Concurrent modification.");
+			boolean localLog = log();
+			try {
+				count++;
+				if (expectedModCount != modCount) {
+					throw new IllegalValue("Concurrent modification.");
+				}
+				return hasSuccessor(nextItemOut);
+			} finally {
+				if (localLog)
+					log("hasNext()");
 			}
-			dictionaryLog.append("Operation iterator.hasNext() completed using "+count+" comparisons\n");
-			return hasSuccessor(nextItemOut);
 		}
 		
 		/**
@@ -729,17 +837,23 @@ public class Dictionary<E extends Comparable<E>>{
 		 */
 		@Override
 		public E next() throws OutOfBounds{
-			if(firstCase){
-				firstCase = false;	// set firstCase finished
-				nextCalled = true;	// record next has been called
-				return nextItemOut;
-			}
-			if(hasNext()){
-				nextItemOut = successor(nextItemOut);
-				nextCalled = true;	// record next has been called;
-				return nextItemOut;
-			}
-			else throw new OutOfBounds("No further Items."); 
+			boolean localLog = log();
+			try {
+				if (firstCase) {
+					firstCase = false; // set firstCase finished
+					nextCalled = true; // record next has been called
+					return nextItemOut;
+				}
+				if (hasNext()) {
+					nextItemOut = successor(nextItemOut);
+					nextCalled = true; // record next has been called;
+					return nextItemOut;
+				} else
+					throw new OutOfBounds("No further Items.");
+			} finally {
+				if (localLog)
+					log("next()");
+			} 
 		}
 		
 		/**
@@ -751,23 +865,23 @@ public class Dictionary<E extends Comparable<E>>{
 		 * New Iterator required if modCounts do not match up.
 		 */
 		public void remove(){
-			int count = 0;
-			count++;
-			if(expectedModCount != modCount){
-				dictionaryLog.append("Operation iterator.remove() failed using "+count+" comparisons\n");
-				throw new IllegalValue("Concurrent modification.");
+			boolean localLog = log();
+			try {
+				count++;
+				if (expectedModCount != modCount) {
+					throw new IllegalValue("Concurrent modification.");
+				}
+				if (nextCalled) {
+					delete(nextItemOut);
+				} else {
+					throw new OutOfBounds("Cannot remove without calling next.");
+				}
+				nextCalled = false; // Cannot run twice in a row
+				expectedModCount++; // Record modification to structure in iterator
+			} finally {
+				if (localLog)
+					log("remove()");
 			}
-			count++;
-			if(nextCalled){
-				dictionaryLog.append("Operation iterator.remove() completed using "+count+" comparisons\n");
-				delete(nextItemOut);
-			}
-			else{
-				dictionaryLog.append("Operation iterator.remove() failed using "+count+" comparisons\n");
-				throw new OutOfBounds("Cannot remove without calling next.");
-			}
-			nextCalled = false; // Cannot run twice in a row
-			expectedModCount++; // Record modification to structure in iterator
 		}
 	}
 	
