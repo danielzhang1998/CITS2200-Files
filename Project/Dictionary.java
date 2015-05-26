@@ -300,14 +300,12 @@ public class Dictionary<E extends Comparable<E>>{
 				parentNode = currentNode;
 				// If freshItem is lower go left else go right
 				count++;
-				currentNode = compare(freshItem, currentNode) < 0 ? currentNode.left
-						: currentNode.right;
+				currentNode = compare(freshItem, currentNode) < 0 ? currentNode.left : currentNode.right;
 				// Check for two red children while iterating down tree
 				// Avoids case with red parent and red uncle and
 				// moving back up tree to swap colours appropriately
 				count++;
-				if (currentNode.left.colour == RED
-						&& currentNode.right.colour == RED) {
+				if (currentNode.left.colour == RED && currentNode.right.colour == RED) {
 					fixDictionary(freshItem); // Colour flip
 				}
 			}
@@ -404,8 +402,7 @@ public class Dictionary<E extends Comparable<E>>{
 									: siblingNode.right;
 							// If outer child or both children are red do a single rotation
 							count += 2;
-							if ((redNephew.data.compareTo(siblingNode.data) < 0) == siblingNode.data
-									.compareTo(parentNode.data) < 0){
+							if ((redNephew.data.compareTo(siblingNode.data) < 0) == siblingNode.data.compareTo(parentNode.data) < 0){
 								parentNode.colour = BLACK;
 								siblingNode.colour = RED;
 								redNephew.colour = BLACK;
@@ -433,12 +430,10 @@ public class Dictionary<E extends Comparable<E>>{
 				count++;
 				if (parentNode.right == currentNode) {
 					count++;
-					parentNode.right = (currentNode.left == ghostNode) ? currentNode.right
-							: currentNode.left;
+					parentNode.right = (currentNode.left == ghostNode) ? currentNode.right : currentNode.left;
 				} else {
 					count++;
-					parentNode.left = (currentNode.left == ghostNode) ? currentNode.right
-							: currentNode.left;
+					parentNode.left = (currentNode.left == ghostNode) ? currentNode.right : currentNode.left;
 				}
 				beforeRoot.right.colour = BLACK;
 				modCount++; // Record Modification
